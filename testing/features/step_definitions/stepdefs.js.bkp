@@ -1,0 +1,55 @@
+const assert = require('assert');
+const { Given, When, Then } = require('cucumber');
+const jd = require('json-diff');
+const request = require('sync-request');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Given('el listado de la facturación de espectáculos', function (espectaculos) {
+   this.invoice = JSON.parse(espectaculos);
+});
+
+Given('la lista de obras', async function (obras) {
+   this.plays = JSON.parse(obras);
+
+   try {
+      let res = await request('GET','http://backend:8080/plays');
+
+      let body = JSON.parse(res.getBody('utf8'));
+      if (body.status == 200) {
+         const d = jd.diff(
+            body.data,
+            this.plays,            
+            {outputNewOnly: true});
+         console.log("Diff: ", d);
+         return assert.equal(null, d);
+      } else {
+         return assert.fail(body.message);
+      }
+   } catch (error) {
+      return assert.fail(error.message);
+   }
+
+});
+
+When('mando a imprimir el borderau', function () {
+   this.actualAnswer = print_the_bill(this.invoice,this.play);
+});
+
+Then('debería imprimir el borderau', function (expectedAnswer) {
+   assert.equal(this.actualAnswer.trim(), expectedAnswer.trim());;
+});
+

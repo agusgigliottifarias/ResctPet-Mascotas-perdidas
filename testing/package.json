@@ -1,0 +1,17 @@
+{
+  "name": "restuix-testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "cucumber-js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cucumber": "^6.0.7",
+    "json-diff": "^1.0.3",
+    "sync-request": "^6.1.0"
+  }
+}
