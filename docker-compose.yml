@@ -13,8 +13,6 @@ services:
       POSTGRES_PASSWORD: APP
       POSTGRES_DB: labprog
 
-  # 10.000km
-
   backend:
     build:
       context: ./backend
@@ -22,7 +20,7 @@ services:
     container_name: backend
     volumes:
       - ./backend:/app
-      - ../common/backend/m2:/root/.m2
+      - m2_cache:/root/.m2
     working_dir: /app
     command: sh run.sh
     ports:
@@ -37,24 +35,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: frontend
-    ### --- SEGUIR INSTRUCIVO AQUI ####
-    # -- Comentar luego de ng new
-    #working_dir: /home/node 
-    # -- Descomentar luego de ng new
     working_dir: /home/node/cli
-    command: ng serve --host=0.0.0.0
-    ### ------------------------- ####
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     restart: always
     ports:
       - "4200:4200"
-    # stdin_open y tty mantienen el servidor funcionando sin commandos en ejecución
     stdin_open: true
     tty: true
     volumes:
       - ./frontend:/home/node      
-    # Activar lo siguiente luego del taller End-to-end
-    # depends_on: 
-      # - backend
 
   testing:
     image: node:20-alpine
@@ -64,11 +53,8 @@ services:
     working_dir: /home/node
     volumes:
       - ./testing:/home/node
-      - ../common/testing/node_modules:/home/node/node_modules      
     command: npm test
-    # comentar esto
-    # depends_on:
-    #   - backend
 
 volumes:
   postgres:
+  m2_cache:

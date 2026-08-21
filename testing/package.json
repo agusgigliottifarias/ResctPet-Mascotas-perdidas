@@ -1,17 +1,18 @@
 {
-  "name": "restuix-testing",
+  "name": "resctpet-mascotas-perdidas-testing",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "cucumber-js"
+    "test": "cucumber-js features/*.feature --require features/step_definitions/*.js --format progress"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "cucumber": "^6.0.7",
-    "json-diff": "^1.0.3",
-    "sync-request": "^6.1.0"
+    "@cucumber/cucumber": "^10.0.0",
+    "axios": "^1.6.0",
+    "chai": "^6.2.2",
+    "supertest": "^7.2.2"
   }
 }

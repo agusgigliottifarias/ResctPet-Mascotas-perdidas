@@ -38,7 +38,7 @@ case "$1" in
     docker exec -t backend mvn $2
     ;;
   test ) echo "Testing"
-    docker compose run --rm testing
+    docker compose run -t --rm testing
     ;;
   staging ) echo "Cargando staging $2"
     cat ./staging/$2.sql | docker exec -i database psql -q -U APP -d labprog

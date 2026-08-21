@@ -1,0 +1,15 @@
+package unpsjb.labprog.backend.model;
+
+import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Embeddable
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Precio {
+    private Double monto;
+    private String moneda;
+}
