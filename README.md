@@ -20,7 +20,6 @@ Diseñada para reemplazar la información dispersa en redes sociales y sitios mu
 ## Requisitos
 
 * Docker 24+ y Docker Compose instalados en el sistema.
-* 4 GB de memoria RAM disponibles para la ejecución del stack de contenedores.
 
 ---
 
@@ -35,7 +34,7 @@ Para clonar el repositorio, configurar las variables y construir las imágenes p
 git clone https://github.com/agusgigliottifarias/ResctPet-Mascotas-perdidas
 cd ResctPet-Mascotas-perdidas
 
-# 2. Copiar la plantilla de entorno
+# 2. Copiar la plantilla de entorno y completar los datos
 cp .env.example .env
 
 # 3. Dar permisos de ejecución al script lpl
@@ -81,23 +80,13 @@ ResctPet-Mascotas-perdidas/
 ├── lpl                 # Script helper para comandos de Docker
 ├── frontend/cli/       # Aplicación web React 19 + Vite + Tailwind CSS
 ├── backend/            # API REST Spring Boot (Java 17) estructurada en 3 capas
-├── embedding-service/  # Microservicio de IA para Embeddings y Similitud Coseno (PyTorch)
-├── testing/            # Suite de pruebas automatizadas BDD (Cucumber.js)
-├── docker-compose.yml  # Orquestador de todos los contenedores del sistema
+├── embedding-service/  # Microservicio de IA para Embeddings y Similitud Coseno 
+├── testing/            # Pruebas automatizadas BDD (Cucumber.js)
+├── docker-compose.yml  
 ├── .env.example        # Plantilla pública de variables de entorno
-└── .gitignore          # Reglas de exclusión de archivos temporales y secretos
+└── .gitignore          
 ```
 
 ---
 
-## Privacidad y Seguridad
 
-* Protección de Ubicación: La ubicación exacta de la mascota se utiliza internamente para búsquedas espaciales, pero se muestra un radio aproximado en el mapa público para resguardar la privacidad del usuario.
-* Coincidencias Orientativas: Las sugerencias generadas por la IA no representan una confirmación automática de identidad; la decisión final siempre es revisada por la persona usuaria.
-* Gestión de Secretos: Las contraseñas y claves privadas están aisladas en el archivo .env fuera del control de versiones.
-
----
-
-## Proyecto Académico
-
-Desarrollado para la Universidad Nacional de la Patagonia San Juan Bosco (UNPSJB) - Cátedra de Desarrollo de Software / Laboratorio de Programación y Lenguajes.
