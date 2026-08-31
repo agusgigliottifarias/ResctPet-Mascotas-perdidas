@@ -13,6 +13,15 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
 
+  embedding-service:
+    build:
+      context: ./embedding-service
+      dockerfile: Dockerfile
+    container_name: embedding-service
+    restart: always
+    ports:
+      - "8000:8000"
+
   backend:
     build:
       context: ./backend
@@ -22,17 +31,19 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      EMBEDDING_SERVICE_URL: http://embedding-service:8000
     volumes:
       - ./backend:/app
       - m2_cache:/root/.m2
     working_dir: /app
     command: sh run.sh
     ports:
-      - 8080:8080
-      - 35729:35729
-      - 5005:5005
+      - "8080:8080"
+      - "35729:35729"
+      - "5005:5005"
     depends_on:
       - database
+      - embedding-service
 
   frontend:
     build:
