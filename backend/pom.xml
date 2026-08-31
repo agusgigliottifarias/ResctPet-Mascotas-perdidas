@@ -8,11 +8,11 @@
 		<version>3.0.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>unpsjb.labprog</groupId>
+	<groupId>resctpet</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>backend</name>
-	<description>Backend - Laboratorio de Programación y Lenguajes</description>
+	<description>Backend - ResctPet Mascotas Perdidas</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -55,6 +55,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<mainClass>app.AppApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

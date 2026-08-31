@@ -33,7 +33,7 @@ case "$1" in
     docker compose run -t --rm testing
     ;;
   staging ) echo "Cargando staging $2"
-    cat ./staging/$2.sql | docker exec -i database psql -q -U APP -d labprog
+    cat ./staging/$2.sql | docker exec -i database psql -q -U ${POSTGRES_USER:-resctpet_admin} -d ${POSTGRES_DB:-resctpet_db}
     ;;
   * ) echo "Opción inválida."
       ;;
