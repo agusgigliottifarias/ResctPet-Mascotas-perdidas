@@ -7,8 +7,14 @@ export default function AuthSlider() {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   return (
-    <div className="relative flex h-screen w-screen items-center justify-center bg-[#F7F4EE] overflow-hidden">
+    <div className="relative flex h-screen w-screen items-center justify-center bg-[#F7F4EE] overflow-hidden font-['Nunito',sans-serif]">
       
+      {/* Importación directa de fuentes: Quicksand (títulos) y Nunito (cuerpo/inputs) */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700;800&display=swap');
+        .font-heading { font-family: 'Quicksand', sans-serif; }
+      `}</style>
+
       {/* Trama de fondo */}
       <div 
         className="absolute inset-0 opacity-15 pointer-events-none"
@@ -27,18 +33,18 @@ export default function AuthSlider() {
           animate={{ x: isRegister ? "0%" : "100%" }}
           transition={{ type: "spring", stiffness: 75, damping: 15 }}
         >
-          <span className="text-3xl mb-2">🐾</span>
-          <h2 className="text-3xl font-extrabold mb-3 tracking-tight">
+          <span className="text-4xl mb-2 select-none">🐾</span>
+          <h2 className="font-heading text-3xl font-extrabold mb-3 tracking-tight">
             {isRegister ? "¡Hola de nuevo!" : "¡Sumate a la red!"}
           </h2>
-          <p className="mb-8 text-sm text-orange-50 leading-relaxed max-w-xs">
+          <p className="mb-8 text-sm font-medium text-orange-50 leading-relaxed max-w-xs">
             {isRegister
-              ? "¿Ya cuidás patitas con nosotros? Ingresá para ver novedades en tu zona."
+              ? "¿Ya cuidás mascotas con nosotros? Ingresá para ver novedades en tu zona."
               : "Registrate para reportar mascotas perdidas y ayudar a reunirlas con sus familias."}
           </p>
           <button
             onClick={() => setIsRegister(!isRegister)}
-            className="rounded-full border-2 border-white px-8 py-2.5 font-bold text-sm transition hover:bg-white hover:text-[#FF7A59] active:scale-95"
+            className="font-heading rounded-full border-2 border-white px-8 py-2.5 font-bold text-sm tracking-wide transition hover:bg-white hover:text-[#FF7A59] active:scale-95"
           >
             {isRegister ? "Iniciar Sesión" : "Crear Cuenta"}
           </button>
@@ -46,13 +52,13 @@ export default function AuthSlider() {
 
         {/* ================= FORMULARIO 1: INICIAR SESIÓN (LADO IZQUIERDO) ================= */}
         <div className="absolute left-0 flex h-full w-1/2 flex-col items-center justify-center p-10">
-          <h3 className="text-2xl font-bold mb-2 text-[#2D3748]">Iniciar Sesión</h3>
-          <p className="text-xs text-[#718096] mb-6">Ingresá tus credenciales para continuar</p>
+          <h3 className="font-heading text-2xl font-bold mb-1 text-[#2D3748]">Iniciar Sesión</h3>
+          <p className="text-xs font-semibold text-[#718096] mb-6">Ingresá tus datos para continuar</p>
           
           <input
             type="email"
             placeholder="Correo electrónico"
-            className="mb-4 w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] px-4 py-3 text-sm text-[#2D3748] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
+            className="mb-4 w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] px-4 py-3 text-sm text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
           />
 
           {/* Campo Contraseña con botón de visualización */}
@@ -60,7 +66,7 @@ export default function AuthSlider() {
             <input
               type={showLoginPassword ? "text" : "password"}
               placeholder="Contraseña"
-              className="w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] pl-4 pr-11 py-3 text-sm text-[#2D3748] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
+              className="w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] pl-4 pr-11 py-3 text-sm text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
             />
             <button
               type="button"
@@ -81,25 +87,25 @@ export default function AuthSlider() {
             </button>
           </div>
 
-          <button className="w-full rounded-xl bg-[#FF7A59] py-3 font-bold text-white text-sm shadow-md transition hover:bg-[#ff6842] active:scale-[0.98]">
+          <button className="font-heading w-full rounded-xl bg-[#FF7A59] py-3 font-bold text-white text-sm shadow-md transition hover:bg-[#ff6842] active:scale-[0.98]">
             Entrar a Yirando
           </button>
         </div>
 
         {/* ================= FORMULARIO 2: CREAR CUENTA (LADO DERECHO) ================= */}
         <div className="absolute right-0 flex h-full w-1/2 flex-col items-center justify-center p-10">
-          <h3 className="text-2xl font-bold mb-2 text-[#2D3748]">Crear Cuenta</h3>
-          <p className="text-xs text-[#718096] mb-6">Sé parte de la comunidad de rescate</p>
+          <h3 className="font-heading text-2xl font-bold mb-1 text-[#2D3748]">Crear Cuenta</h3>
+          <p className="text-xs font-semibold text-[#718096] mb-6">Sé parte de la comunidad de rescate</p>
           
           <input
             type="text"
             placeholder="Nombre y Apellido"
-            className="mb-3.5 w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] px-4 py-2.5 text-sm text-[#2D3748] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
+            className="mb-3.5 w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] px-4 py-2.5 text-sm text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
           />
           <input
             type="email"
             placeholder="Correo electrónico"
-            className="mb-3.5 w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] px-4 py-2.5 text-sm text-[#2D3748] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
+            className="mb-3.5 w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] px-4 py-2.5 text-sm text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
           />
 
           {/* Campo Contraseña con botón de visualización */}
@@ -107,7 +113,7 @@ export default function AuthSlider() {
             <input
               type={showRegisterPassword ? "text" : "password"}
               placeholder="Contraseña"
-              className="w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] pl-4 pr-11 py-2.5 text-sm text-[#2D3748] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
+              className="w-full rounded-xl bg-[#FDFBF7] border border-[#E2E8F0] pl-4 pr-11 py-2.5 text-sm text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all duration-200 focus:-translate-y-0.5 focus:shadow-md focus:border-[#FF7A59] focus:ring-2 focus:ring-[#FF7A59]/20"
             />
             <button
               type="button"
@@ -128,7 +134,7 @@ export default function AuthSlider() {
             </button>
           </div>
 
-          <button className="w-full rounded-xl bg-[#FF7A59] py-3 font-bold text-white text-sm shadow-md transition hover:bg-[#ff6842] active:scale-[0.98]">
+          <button className="font-heading w-full rounded-xl bg-[#FF7A59] py-3 font-bold text-white text-sm shadow-md transition hover:bg-[#ff6842] active:scale-[0.98]">
             Registrarme Gratis
           </button>
         </div>
