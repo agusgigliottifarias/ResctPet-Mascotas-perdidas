@@ -1,7 +1,9 @@
 services:
 
   database:
-    image: postgis/postgis:16-3.4-alpine
+    build:
+      context: ./database
+      dockerfile: Dockerfile
     container_name: database
     restart: always
     ports:
