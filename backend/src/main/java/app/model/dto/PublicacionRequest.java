@@ -12,6 +12,7 @@ public class PublicacionRequest {
     private String fotografia;
     private Double latitud;
     private Double longitud;
+    private Long usuarioId;
 
     public TipoPublicacion getTipoPublicacion() {
         return tipoPublicacion;
@@ -67,5 +68,12 @@ public class PublicacionRequest {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
     }
 }
