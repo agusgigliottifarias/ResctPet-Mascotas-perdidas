@@ -2,14 +2,14 @@ package app.presenter;
 
 import app.Response;
 import app.business.PublicacionService;
-import app.model.Publicacion;
 import app.model.dto.PublicacionRequest;
+import app.model.dto.PublicacionResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/publicaciones") //verificar con el frontend
+@RequestMapping("/api/publicaciones")
 @CrossOrigin(origins = "*")
 public class PublicacionPresenter {
 
@@ -22,12 +22,12 @@ public class PublicacionPresenter {
     @PostMapping
     public ResponseEntity<Response> crearPublicacion(@RequestBody PublicacionRequest request) {
         try {
-            Publicacion guardada = publicacionService.guardar(request);
+            PublicacionResponse respuesta = publicacionService.guardar(request);
 
             return Response.response(
                 HttpStatus.CREATED,
-                "Publicación creada y almacenada exitosamente",
-                guardada
+                "Publicación creada y fotografía asociada exitosamente",
+                respuesta
             );
 
         } catch (IllegalArgumentException e) {

@@ -3,6 +3,7 @@ package app.business;
 import app.model.Publicacion;
 import app.model.Usuario;
 import app.model.dto.PublicacionRequest;
+import app.model.dto.PublicacionResponse;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
@@ -23,7 +24,7 @@ public class PublicacionService {
     }
 
     @Transactional
-    public Publicacion guardar(PublicacionRequest request) {
+    public PublicacionResponse guardar(PublicacionRequest request) {
         PublicacionValidator.validar(request);
 
         Publicacion publicacion = new Publicacion();
@@ -31,7 +32,9 @@ public class PublicacionService {
         publicacion.setEspecie(request.getEspecie());
         publicacion.setFecha(request.getFecha());
         publicacion.setCaracteristicas(request.getCaracteristicas());
+        
         publicacion.setFotografia(request.getFotografia());
+        
         publicacion.setLatitud(request.getLatitud());
         publicacion.setLongitud(request.getLongitud());
 
@@ -40,6 +43,21 @@ public class PublicacionService {
             publicacion.setUsuario(usuario);
         }
 
-        return publicacionRepository.save(publicacion);
+        Publicacion guardada = publicacionRepository.save(publicacion);
+
+        Long usuarioId = guardada.getUsuario() != null ? guardada.getUsuario().getId() : null;
+
+        return new PublicacionResponse(
+            guardada.getId(),
+            guardada.getTipoPublicacion(),
+            guardada.getEspecie(),
+            guardada.getFecha(),
+            guardada.getCaracteristicas(),
+            guardada.getFotografia(),
+            guardada.getLatitud(),
+            guardada.getLongitud(),
+            usuarioId,
+            guardada.getFechaCreacion()
+        );
     }
 }
