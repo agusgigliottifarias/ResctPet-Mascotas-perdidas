@@ -36,6 +36,13 @@ public class PublicacionPresenter {
                 e.getMessage(),
                 null
             );
+
+        } catch (Exception e) {
+            return Response.response(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Ocurrió un error al crear la publicación",
+                null
+            );
         }
     }
 }
