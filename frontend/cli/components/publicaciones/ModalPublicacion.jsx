@@ -232,7 +232,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
                 disabled={loading}
                 className="flex-1 sm:flex-initial sm:w-64 rounded-xl bg-[#FF7A59] py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#ff6842] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
               >
-                {loading ? 'Publicando...' : 'Publicar Alerta Inmediata'}
+                {loading ? 'Publicando...' : `Encontremos a ${formData.nombre || 'la mascota'}`}
               </button>
             </div>
           </form>
