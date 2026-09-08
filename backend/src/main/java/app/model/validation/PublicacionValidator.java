@@ -29,6 +29,14 @@ public class PublicacionValidator {
             );
         }
 
+        try {
+             java.time.LocalDate.parse(publicacion.getFecha());
+             } catch (java.time.format.DateTimeParseException e) {
+             throw new IllegalArgumentException(
+            "La fecha debe tener el formato YYYY-MM-DD"
+             );
+        }
+
         if (publicacion.getCaracteristicas() == null ||
                 publicacion.getCaracteristicas().isBlank()) {
             throw new IllegalArgumentException(
