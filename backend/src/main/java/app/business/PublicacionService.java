@@ -18,46 +18,47 @@ public class PublicacionService {
     private final UsuarioRepository usuarioRepository;
 
     @Autowired
-    public PublicacionService(PublicacionRepository publicacionRepository, UsuarioRepository usuarioRepository) {
+    public PublicacionService(
+            PublicacionRepository publicacionRepository,
+            UsuarioRepository usuarioRepository) {
+
         this.publicacionRepository = publicacionRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional
     public PublicacionResponse guardar(PublicacionRequest request) {
+
         PublicacionValidator.validar(request);
 
         Publicacion publicacion = new Publicacion();
+
         publicacion.setTipoPublicacion(request.getTipoPublicacion());
         publicacion.setEspecie(request.getEspecie());
         publicacion.setFecha(request.getFecha());
         publicacion.setCaracteristicas(request.getCaracteristicas());
-        
         publicacion.setFotografia(request.getFotografia());
-        
         publicacion.setLatitud(request.getLatitud());
         publicacion.setLongitud(request.getLongitud());
 
         if (request.getUsuarioId() != null) {
-            Usuario usuario = usuarioRepository.findById(request.getUsuarioId()).orElse(null);
+            Usuario usuario = usuarioRepository
+                    .findById(request.getUsuarioId())
+                    .orElse(null);
+
             publicacion.setUsuario(usuario);
         }
 
         Publicacion guardada = publicacionRepository.save(publicacion);
 
-        Long usuarioId = guardada.getUsuario() != null ? guardada.getUsuario().getId() : null;
-
         return new PublicacionResponse(
-            guardada.getId(),
-            guardada.getTipoPublicacion(),
-            guardada.getEspecie(),
-            guardada.getFecha(),
-            guardada.getCaracteristicas(),
-            guardada.getFotografia(),
-            guardada.getLatitud(),
-            guardada.getLongitud(),
-            usuarioId,
-            guardada.getFechaCreacion()
+                guardada.getId(),
+                guardada.getTipoPublicacion(),
+                guardada.getEspecie(),
+                guardada.getFecha(),
+                guardada.getCaracteristicas(),
+                guardada.getFotografia(),
+                guardada.getFechaCreacion()
         );
     }
 }

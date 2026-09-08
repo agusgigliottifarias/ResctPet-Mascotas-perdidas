@@ -13,26 +13,26 @@ public class PublicacionResponse {
     private String fecha;
     private String caracteristicas;
     private String fotografia;
-    private Double latitud;
-    private Double longitud;
-    private Long usuarioId;
     private LocalDateTime fechaCreacion;
 
     public PublicacionResponse() {
     }
 
-    public PublicacionResponse(Long id, TipoPublicacion tipoPublicacion, Especie especie, String fecha,
-            String caracteristicas, String fotografia, Double latitud, Double longitud,
-            Long usuarioId, LocalDateTime fechaCreacion) {
+    public PublicacionResponse(
+            Long id,
+            TipoPublicacion tipoPublicacion,
+            Especie especie,
+            String fecha,
+            String caracteristicas,
+            String fotografia,
+            LocalDateTime fechaCreacion) {
+
         this.id = id;
         this.tipoPublicacion = tipoPublicacion;
         this.especie = especie;
         this.fecha = fecha;
         this.caracteristicas = caracteristicas;
         this.fotografia = fotografia;
-        this.latitud = latitud;
-        this.longitud = longitud;
-        this.usuarioId = usuarioId;
         this.fechaCreacion = fechaCreacion;
     }
 
@@ -82,30 +82,6 @@ public class PublicacionResponse {
 
     public void setFotografia(String fotografia) {
         this.fotografia = fotografia;
-    }
-
-    public Double getLatitud() {
-        return latitud;
-    }
-
-    public void setLatitud(Double latitud) {
-        this.latitud = latitud;
-    }
-
-    public Double getLongitud() {
-        return longitud;
-    }
-
-    public void setLongitud(Double longitud) {
-        this.longitud = longitud;
-    }
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
     }
 
     public LocalDateTime getFechaCreacion() {
