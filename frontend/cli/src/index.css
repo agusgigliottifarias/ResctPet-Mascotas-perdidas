@@ -1,25 +1,29 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    font-family: 'Inter', sans-serif;
+@layer utilities {
+  /* Contenedores y modales principales */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 20px 40px -15px rgba(45, 55, 72, 0.08), 
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+
+  /* Inputs y controles interactivos vidriados */
+  .glass-input {
+    background: rgba(253, 251, 247, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(226, 232, 240, 0.7);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) inset;
   }
-}
 
-/* Glassmorphism visual utilities */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  /* Botones secundarios o pills vidriadas */
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
 }
