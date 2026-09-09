@@ -7,6 +7,7 @@ import app.model.dto.PublicacionResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/publicaciones")
@@ -19,30 +20,34 @@ public class PublicacionPresenter {
         this.publicacionService = publicacionService;
     }
 
-    @PostMapping
-    public ResponseEntity<Response> crearPublicacion(@RequestBody PublicacionRequest request) {
-        try {
-            PublicacionResponse respuesta = publicacionService.guardar(request);
+   @PostMapping
+public ResponseEntity<Response> crearPublicacion(
+        @RequestBody PublicacionRequest request,
+        Authentication authentication) {
 
-            return Response.response(
+    try {
+        PublicacionResponse respuesta =
+                publicacionService.guardar(request, authentication);
+
+        return Response.response(
                 HttpStatus.CREATED,
                 "Publicación creada y fotografía asociada exitosamente",
                 respuesta
-            );
+        );
 
-        } catch (IllegalArgumentException e) {
-            return Response.response(
+    } catch (IllegalArgumentException e) {
+        return Response.response(
                 HttpStatus.BAD_REQUEST,
                 e.getMessage(),
                 null
-            );
+        );
 
-        } catch (Exception e) {
-            return Response.response(
+    } catch (Exception e) {
+        return Response.response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Ocurrió un error al crear la publicación",
                 null
-            );
-        }
+        );
     }
+}
 }

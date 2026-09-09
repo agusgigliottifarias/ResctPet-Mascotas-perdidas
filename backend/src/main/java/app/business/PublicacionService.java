@@ -10,6 +10,7 @@ import app.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
 
 @Service
 public class PublicacionService {
@@ -27,7 +28,9 @@ public class PublicacionService {
     }
 
     @Transactional
-    public PublicacionResponse guardar(PublicacionRequest request) {
+    public PublicacionResponse guardar(
+        PublicacionRequest request,
+        Authentication authentication) {
 
         PublicacionValidator.validar(request);
 
@@ -41,13 +44,17 @@ public class PublicacionService {
         publicacion.setLatitud(request.getLatitud());
         publicacion.setLongitud(request.getLongitud());
 
-        if (request.getUsuarioId() != null) {
-            Usuario usuario = usuarioRepository
-                    .findById(request.getUsuarioId())
-                    .orElse(null);
+       String email = authentication.getName();
 
-            publicacion.setUsuario(usuario);
-        }
+Usuario usuario = usuarioRepository
+        .findByEmail(email)
+        .orElseThrow(() ->
+                new IllegalArgumentException(
+                        "El usuario autenticado no existe"
+                )
+        );
+
+publicacion.setUsuario(usuario);
 
         Publicacion guardada = publicacionRepository.save(publicacion);
 
