@@ -6,7 +6,10 @@ import {
   TIPO_PUBLICACION,
   ESPECIE,
   SEXO,
-  TAMANO
+  TAMANO,
+  EDAD,
+  RAZAS_PERRO,
+  RAZAS_GATO
 } from './usePublicacionForm';
 
 export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMapPicker }) {
@@ -31,6 +34,16 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
   const especieOptions = [
     { value: ESPECIE.PERRO, label: 'Perro' },
     { value: ESPECIE.GATO, label: 'Gato' }
+  ];
+
+  const razaOptions = formData.especie === ESPECIE.PERRO ? RAZAS_PERRO : RAZAS_GATO;
+
+  const edadOptions = [
+    { value: EDAD.DESCONOCIDA, label: 'Edad desconocida (Opcional)' },
+    { value: EDAD.CACHORRO, label: 'Cachorro (0 a 1 año)' },
+    { value: EDAD.JOVEN, label: 'Joven (1 a 3 años)' },
+    { value: EDAD.ADULTO, label: 'Adulto (3 a 8 años)' },
+    { value: EDAD.SENIOR, label: 'Adulto mayor (+8 años)' }
   ];
 
   const sexoOptions = esPerdida
@@ -66,7 +79,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative z-10 w-full max-w-[760px] rounded-[36px] bg-white/80 backdrop-blur-2xl p-7 sm:p-8 shadow-[0_30px_70px_-15px_rgba(45,55,72,0.18)] border border-white/90 ring-1 ring-black/5"
+          className="relative z-10 w-full max-w-[800px] rounded-[36px] bg-white/80 backdrop-blur-2xl p-7 sm:p-8 shadow-[0_30px_70px_-15px_rgba(45,55,72,0.18)] border border-white/90 ring-1 ring-black/5"
         >
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
@@ -95,7 +108,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Slider Píldora de Selección */}
+            {/* Slider de alternancia */}
             <div className="relative flex rounded-2xl bg-[#F7F4EE]/70 backdrop-blur-md p-1.5 border border-white/80 shadow-inner mb-4 overflow-hidden">
               <motion.div
                 className="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
@@ -131,109 +144,81 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
             </div>
 
             <div className="space-y-3">
-              {/* Bloque Superior: Parte 1 + Parte 2 */}
+              {/* Grilla Superior (Campos + Imagen) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                 
-                {/* PARTE 1: Controles compactos */}
-                <div className="flex flex-col justify-center">
-                  <AnimatePresence mode="wait">
-                    {esPerdida ? (
-                      <motion.div
-                        key="perdida-grid"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="grid grid-cols-2 gap-2.5"
-                      >
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#4A5568] mb-1 truncate">Nombre de la mascota</label>
-                          <input
-                            type="text"
-                            value={formData.nombre}
-                            onChange={(e) => handleChange('nombre', e.target.value)}
-                            placeholder="Yira"
-                            className="w-full rounded-xl bg-white/60 backdrop-blur-md border border-white/80 px-3 py-2 text-xs text-[#2D3748] font-medium outline-none transition-all duration-200 focus:bg-white/90 focus:border-[#FF7A59]"
-                          />
-                        </div>
+                {/* Parte 1: Grilla 3x2 de campos compactos */}
+                <div className="flex flex-col justify-between h-[230px]">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#4A5568] mb-1 truncate">
+                        {esPerdida ? 'Nombre de la mascota' : 'Nombre (Opcional)'}
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nombre}
+                        onChange={(e) => handleChange('nombre', e.target.value)}
+                        placeholder={esPerdida ? "Yira" : "Si lo conocés"}
+                        className="w-full rounded-xl bg-white/60 backdrop-blur-md border border-white/80 px-3 py-2 text-xs text-[#2D3748] font-medium outline-none transition-all duration-200 focus:bg-white/90 focus:border-[#FF7A59]"
+                      />
+                    </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Especie</label>
-                          <CustomSelect
-                            value={formData.especie}
-                            onChange={(val) => handleChange('especie', val)}
-                            options={especieOptions}
-                            activeColor={activeColor}
-                          />
-                        </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Especie</label>
+                      <CustomSelect
+                        value={formData.especie}
+                        onChange={(val) => handleChange('especie', val)}
+                        options={especieOptions}
+                        activeColor={activeColor}
+                      />
+                    </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Sexo</label>
-                          <CustomSelect
-                            value={formData.sexo}
-                            onChange={(val) => handleChange('sexo', val)}
-                            options={sexoOptions}
-                            activeColor={activeColor}
-                          />
-                        </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Raza</label>
+                      <CustomSelect
+                        value={formData.raza}
+                        onChange={(val) => handleChange('raza', val)}
+                        options={razaOptions}
+                        disabled={!formData.especie}
+                        activeColor={activeColor}
+                        searchable={true}
+                      />
+                    </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#4A5568] mb-1 truncate">Tamaño aproximado</label>
-                          <CustomSelect
-                            value={formData.tamano}
-                            onChange={(val) => handleChange('tamano', val)}
-                            options={tamanoOptions}
-                            activeColor={activeColor}
-                          />
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="encontrada-grid"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="space-y-2.5"
-                      >
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Especie</label>
-                          <CustomSelect
-                            value={formData.especie}
-                            onChange={(val) => handleChange('especie', val)}
-                            options={especieOptions}
-                            activeColor={activeColor}
-                          />
-                        </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#4A5568] mb-1 truncate">Edad (Opcional)</label>
+                      <CustomSelect
+                        value={formData.edad}
+                        onChange={(val) => handleChange('edad', val)}
+                        options={edadOptions}
+                        activeColor={activeColor}
+                      />
+                    </div>
 
-                        <div className="grid grid-cols-2 gap-2.5">
-                          <div>
-                            <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Sexo</label>
-                            <CustomSelect
-                              value={formData.sexo}
-                              onChange={(val) => handleChange('sexo', val)}
-                              options={sexoOptions}
-                              activeColor={activeColor}
-                            />
-                          </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#4A5568] mb-1">Sexo</label>
+                      <CustomSelect
+                        value={formData.sexo}
+                        onChange={(val) => handleChange('sexo', val)}
+                        options={sexoOptions}
+                        activeColor={activeColor}
+                      />
+                    </div>
 
-                          <div>
-                            <label className="block text-[11px] font-bold text-[#4A5568] mb-1 truncate">Tamaño aproximado</label>
-                            <CustomSelect
-                              value={formData.tamano}
-                              onChange={(val) => handleChange('tamano', val)}
-                              options={tamanoOptions}
-                              activeColor={activeColor}
-                            />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#4A5568] mb-1 truncate">Tamaño aproximado</label>
+                      <CustomSelect
+                        value={formData.tamano}
+                        onChange={(val) => handleChange('tamano', val)}
+                        options={tamanoOptions}
+                        activeColor={activeColor}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* PARTE 2: Subida de imagen */}
-                <div className="h-full min-h-[145px]">
+                {/* Parte 2: Subida de imagen con contorno y fondo reactivos */}
+                <div className="h-[230px]">
                   <motion.div
                     onClick={() => fileInputRef.current?.click()}
                     animate={{
@@ -271,7 +256,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
                             color: activeColor
                           }}
                           transition={{ duration: 0.45, ease: 'easeInOut' }}
-                          className="flex h-9 w-9 items-center justify-center rounded-full mb-1 group-hover:scale-105 transition-transform"
+                          className="flex h-11 w-11 items-center justify-center rounded-full mb-1.5 group-hover:scale-105 transition-transform"
                         >
                           📷
                         </motion.div>
@@ -284,7 +269,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
 
               </div>
 
-              {/* PARTE 3: Cuadros anchos */}
+              {/* Parte 3: Cuadros anchos */}
               <div className="space-y-2.5 pt-1">
                 {esPerdida ? (
                   <div>
@@ -360,7 +345,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer de Acciones */}
             <div className="flex items-center justify-end gap-3 pt-3 mt-4 border-t border-white/60">
               <button
                 type="button"

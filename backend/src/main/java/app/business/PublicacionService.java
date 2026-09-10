@@ -38,6 +38,8 @@ public class PublicacionService {
 
         publicacion.setTipoPublicacion(request.getTipoPublicacion());
         publicacion.setEspecie(request.getEspecie());
+        publicacion.setRaza(request.getRaza());
+        publicacion.setEdad(request.getEdad());
         publicacion.setFecha(request.getFecha());
         publicacion.setCaracteristicas(request.getCaracteristicas());
         publicacion.setFotografia(request.getFotografia());
@@ -62,6 +64,8 @@ publicacion.setUsuario(usuario);
                 guardada.getId(),
                 guardada.getTipoPublicacion(),
                 guardada.getEspecie(),
+                guardada.getRaza(),
+                guardada.getEdad(),
                 guardada.getFecha(),
                 guardada.getCaracteristicas(),
                 guardada.getFotografia(),

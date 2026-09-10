@@ -7,6 +7,8 @@ public class PublicacionRequest {
 
     private TipoPublicacion tipoPublicacion;
     private Especie especie;
+    private String raza;
+    private String edad;
     private String fecha;
     private String caracteristicas;
     private String fotografia;

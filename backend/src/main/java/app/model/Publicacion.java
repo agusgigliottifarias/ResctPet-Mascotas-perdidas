@@ -22,6 +22,12 @@ public class Publicacion {
     @Column(nullable = false)
     private Especie especie;
 
+    @Column(length = 100)
+    private String raza;
+
+    @Column(length = 50)
+    private String edad;
+    
     @Column(nullable = false)
     private String fecha;
 
@@ -69,6 +75,22 @@ public class Publicacion {
 
     public void setEspecie(Especie especie) {
         this.especie = especie;
+    }
+
+    public String getRaza() {
+        return raza;
+    }
+
+    public void setRaza(String raza) {
+        this.raza = raza;
+    }
+
+    public String getEdad() {
+        return edad;
+    }
+
+    public void setEdad(String edad) {
+        this.edad = edad;
     }
 
     public String getFecha() {

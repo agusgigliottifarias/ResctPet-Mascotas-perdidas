@@ -1,11 +1,17 @@
 import axiosClient from './axiosClient';
 
 /**
- * Crea una nueva publicación de mascota en el backend.
- * @param {Object} publicacionData
- * @returns {Promise<Object>}
+ * Registra una publicación en Spring Boot
+ * @param {Object} publicacionRequest DTO esperado por el backend
  */
-export const crearPublicacion = async (publicacionData) => {
-  const response = await axiosClient.post('/publicaciones', publicacionData);
+export const crearPublicacion = async (publicacionRequest) => {
+  const response = await axiosClient.post('/publicaciones', publicacionRequest);
+  return response.data;
+};
+
+
+// Obtiene el listado de publicaciones
+export const getPublicaciones = async () => {
+  const response = await axiosClient.get('/publicaciones');
   return response.data;
 };
