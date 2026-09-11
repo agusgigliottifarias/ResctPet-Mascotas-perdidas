@@ -69,6 +69,8 @@ public class PublicacionService {
                 guardada.getFecha(),
                 guardada.getCaracteristicas(),
                 guardada.getFotografia(),
+                guardada.getLatitud(),
+                guardada.getLongitud(),
                 guardada.getFechaCreacion()
         );
     }
@@ -92,6 +94,8 @@ public class PublicacionService {
                 publicacion.getFecha(),
                 publicacion.getCaracteristicas(),
                 publicacion.getFotografia(),
+                publicacion.getLatitud(),
+                publicacion.getLongitud(),
                 publicacion.getFechaCreacion()
         );
     }

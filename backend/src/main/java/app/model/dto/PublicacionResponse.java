@@ -10,9 +10,13 @@ public class PublicacionResponse {
     private Long id;
     private TipoPublicacion tipoPublicacion;
     private Especie especie;
+    private String raza;
+    private String edad;
     private String fecha;
     private String caracteristicas;
     private String fotografia;
+    private Double latitud;
+    private Double longitud;
     private LocalDateTime fechaCreacion;
 
     public PublicacionResponse() {
@@ -22,17 +26,25 @@ public class PublicacionResponse {
             Long id,
             TipoPublicacion tipoPublicacion,
             Especie especie,
+            String raza,
+            String edad,
             String fecha,
             String caracteristicas,
             String fotografia,
+            Double latitud,
+            Double longitud,
             LocalDateTime fechaCreacion) {
 
         this.id = id;
         this.tipoPublicacion = tipoPublicacion;
         this.especie = especie;
+        this.raza = raza;
+        this.edad = edad;
         this.fecha = fecha;
         this.caracteristicas = caracteristicas;
         this.fotografia = fotografia;
+        this.latitud = latitud;
+        this.longitud = longitud;
         this.fechaCreacion = fechaCreacion;
     }
 
@@ -60,6 +72,22 @@ public class PublicacionResponse {
         this.especie = especie;
     }
 
+    public String getRaza() {
+        return raza;
+    }
+
+    public void setRaza(String raza) {
+        this.raza = raza;
+    }
+
+    public String getEdad() {
+        return edad;
+    }
+
+    public void setEdad(String edad) {
+        this.edad = edad;
+    }
+
     public String getFecha() {
         return fecha;
     }
@@ -82,6 +110,22 @@ public class PublicacionResponse {
 
     public void setFotografia(String fotografia) {
         this.fotografia = fotografia;
+    }
+
+    public Double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(Double latitud) {
+        this.latitud = latitud;
+    }
+
+    public Double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(Double longitud) {
+        this.longitud = longitud;
     }
 
     public LocalDateTime getFechaCreacion() {
