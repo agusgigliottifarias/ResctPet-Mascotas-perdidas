@@ -29,8 +29,8 @@ public class PublicacionService {
 
     @Transactional
     public PublicacionResponse guardar(
-        PublicacionRequest request,
-        Authentication authentication) {
+            PublicacionRequest request,
+            Authentication authentication) {
 
         PublicacionValidator.validar(request);
 
@@ -46,17 +46,17 @@ public class PublicacionService {
         publicacion.setLatitud(request.getLatitud());
         publicacion.setLongitud(request.getLongitud());
 
-       String email = authentication.getName();
+        String email = authentication.getName();
 
-Usuario usuario = usuarioRepository
-        .findByEmail(email)
-        .orElseThrow(() ->
-                new IllegalArgumentException(
-                        "El usuario autenticado no existe"
-                )
-        );
+        Usuario usuario = usuarioRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "El usuario autenticado no existe"
+                        )
+                );
 
-publicacion.setUsuario(usuario);
+        publicacion.setUsuario(usuario);
 
         Publicacion guardada = publicacionRepository.save(publicacion);
 
@@ -70,6 +70,29 @@ publicacion.setUsuario(usuario);
                 guardada.getCaracteristicas(),
                 guardada.getFotografia(),
                 guardada.getFechaCreacion()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public PublicacionResponse consultar(Long id) {
+
+        Publicacion publicacion = publicacionRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No se encontró la publicación con ID: " + id
+                        )
+                );
+
+        return new PublicacionResponse(
+                publicacion.getId(),
+                publicacion.getTipoPublicacion(),
+                publicacion.getEspecie(),
+                publicacion.getRaza(),
+                publicacion.getEdad(),
+                publicacion.getFecha(),
+                publicacion.getCaracteristicas(),
+                publicacion.getFotografia(),
+                publicacion.getFechaCreacion()
         );
     }
 }

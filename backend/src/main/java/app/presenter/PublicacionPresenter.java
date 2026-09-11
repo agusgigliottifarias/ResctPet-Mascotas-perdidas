@@ -21,7 +21,7 @@ public class PublicacionPresenter {
         this.publicacionService = publicacionService;
     }
 
-    // Endpoint genérico (procesa el tipoPublicacion que venga en el JSON)
+    // Endpoint genérico
     @PostMapping
     public ResponseEntity<Response> crearPublicacion(
             @RequestBody PublicacionRequest request,
@@ -30,7 +30,7 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint específico para mascotas perdidas (T - 3.1.3)
+    // Endpoint específico para mascotas perdidas
     @PostMapping("/perdidas")
     public ResponseEntity<Response> crearPublicacionPerdida(
             @RequestBody PublicacionRequest request,
@@ -40,7 +40,7 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint específico para mascotas encontradas (T - 3.2.3)
+    // Endpoint específico para mascotas encontradas
     @PostMapping("/encontradas")
     public ResponseEntity<Response> crearPublicacionEncontrada(
             @RequestBody PublicacionRequest request,
@@ -50,7 +50,38 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Método auxiliar privado para centralizar el manejo de respuestas
+    // Endpoint para consultar una publicación
+    @GetMapping("/{id}")
+    public ResponseEntity<Response> consultarPublicacion(
+            @PathVariable Long id) {
+
+        try {
+            PublicacionResponse respuesta =
+                    publicacionService.consultar(id);
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Publicación consultada exitosamente",
+                    respuesta
+            );
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(
+                    HttpStatus.NOT_FOUND,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error al consultar la publicación",
+                    null
+            );
+        }
+    }
+
+    // Método auxiliar para centralizar el manejo de respuestas
     private ResponseEntity<Response> procesarGuardado(
             PublicacionRequest request,
             Authentication authentication) {
