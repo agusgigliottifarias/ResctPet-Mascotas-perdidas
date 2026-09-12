@@ -81,7 +81,9 @@ public class PublicacionService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No se encontró la publicación con ID: " + id));
 
-        // Ubicación aproximada (T-3.3.4)
+        Double latitudAproximada = aproximarCoordenada(publicacion.getLatitud());
+        Double longitudAproximada = aproximarCoordenada(publicacion.getLongitud());
+
         return new PublicacionResponse(
                 publicacion.getId(),
                 publicacion.getTipoPublicacion(),
@@ -91,8 +93,8 @@ public class PublicacionService {
                 publicacion.getFecha(),
                 publicacion.getCaracteristicas(),
                 publicacion.getFotografia(),
-                aproximarCoordenada(publicacion.getLatitud()),
-                aproximarCoordenada(publicacion.getLongitud()),
+                latitudAproximada,
+                longitudAproximada,
                 publicacion.getFechaCreacion());
     }
 
@@ -102,4 +104,5 @@ public class PublicacionService {
         }
         return Math.round(coordenada * 100.0) / 100.0;
     }
+
 }
