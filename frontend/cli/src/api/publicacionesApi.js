@@ -1,17 +1,33 @@
 import axiosClient from './axiosClient';
 
 /**
- * Registra una publicación en Spring Boot
- * @param {Object} publicacionRequest DTO esperado por el backend
+ * Registra una publicación de Mascota Perdida en Spring Boot
  */
-export const crearPublicacion = async (publicacionRequest) => {
-  const response = await axiosClient.post('/publicaciones', publicacionRequest);
+export const crearPublicacionPerdida = async (publicacionRequest) => {
+  const response = await axiosClient.post('/api/publicaciones/perdidas', publicacionRequest);
   return response.data;
 };
 
+/**
+ * Registra una publicación de Mascota Encontrada en Spring Boot
+ */
+export const crearPublicacionEncontrada = async (publicacionRequest) => {
+  const response = await axiosClient.post('/api/publicaciones/encontradas', publicacionRequest);
+  return response.data;
+};
 
-// Obtiene el listado de publicaciones
-export const getPublicaciones = async () => {
-  const response = await axiosClient.get('/publicaciones');
+/**
+ * Registra una publicación genérica
+ */
+export const crearPublicacion = async (publicacionRequest) => {
+  const response = await axiosClient.post('/api/publicaciones', publicacionRequest);
+  return response.data;
+};
+
+/**
+ * Consulta una publicación por ID
+ */
+export const getPublicacionPorId = async (id) => {
+  const response = await axiosClient.get(`/api/publicaciones/${id}`);
   return response.data;
 };

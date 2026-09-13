@@ -1,19 +1,20 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomSelect from '../ui/CustomSelect';
+import { usePublicacionForm } from './usePublicacionForm';
 import {
-  usePublicacionForm,
   TIPO_PUBLICACION,
   ESPECIE,
   SEXO,
   TAMANO,
   EDAD,
-  RAZAS_PERRO,
-  RAZAS_GATO
-} from './usePublicacionForm';
+  getRazasPorEspecie
+} from '../../constants/mascotas';
 
 export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMapPicker }) {
   const fileInputRef = useRef(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     formData,
@@ -26,17 +27,33 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
     handleSubmit
   } = usePublicacionForm({ onSuccess, onClose });
 
+  // Sincronizar estado inicial si la URL ya viene con ?tipo=encontrada o ?tipo=perdida
+  const tipoEnUrl = searchParams.get('tipo');
+  useEffect(() => {
+    if (tipoEnUrl === 'encontrada' && formData.tipo !== TIPO_PUBLICACION.ENCONTRADA) {
+      handleChange('tipo', TIPO_PUBLICACION.ENCONTRADA);
+    } else if (tipoEnUrl === 'perdida' && formData.tipo !== TIPO_PUBLICACION.PERDIDA) {
+      handleChange('tipo', TIPO_PUBLICACION.PERDIDA);
+    }
+  }, [tipoEnUrl, handleChange, formData.tipo]);
+
   if (!isOpen) return null;
 
   const esPerdida = formData.tipo === TIPO_PUBLICACION.PERDIDA;
   const activeColor = esPerdida ? '#FF7A59' : '#2EC4B6';
+
+  // Función para cambiar tipo y actualizar la URL sin recargar
+  const cambiarTipo = (nuevoTipo) => {
+    handleChange('tipo', nuevoTipo);
+    setSearchParams({ tipo: nuevoTipo.toLowerCase() });
+  };
 
   const especieOptions = [
     { value: ESPECIE.PERRO, label: 'Perro' },
     { value: ESPECIE.GATO, label: 'Gato' }
   ];
 
-  const razaOptions = formData.especie === ESPECIE.PERRO ? RAZAS_PERRO : RAZAS_GATO;
+  const razaOptions = getRazasPorEspecie(formData.especie);
 
   const edadOptions = [
     { value: EDAD.DESCONOCIDA, label: 'Edad desconocida (Opcional)' },
@@ -108,7 +125,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Slider de alternancia */}
+            {/* Slider de alternancia con cambio de URL */}
             <div className="relative flex rounded-2xl bg-[#F7F4EE]/70 backdrop-blur-md p-1.5 border border-white/80 shadow-inner mb-4 overflow-hidden">
               <motion.div
                 className="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
@@ -124,7 +141,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
 
               <button
                 type="button"
-                onClick={() => handleChange('tipo', TIPO_PUBLICACION.PERDIDA)}
+                onClick={() => cambiarTipo(TIPO_PUBLICACION.PERDIDA)}
                 className={`relative z-10 font-heading flex-1 py-2.5 text-xs font-bold transition-colors duration-300 ${
                   esPerdida ? 'text-white' : 'text-[#718096] hover:text-[#2D3748]'
                 }`}
@@ -134,7 +151,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
 
               <button
                 type="button"
-                onClick={() => handleChange('tipo', TIPO_PUBLICACION.ENCONTRADA)}
+                onClick={() => cambiarTipo(TIPO_PUBLICACION.ENCONTRADA)}
                 className={`relative z-10 font-heading flex-1 py-2.5 text-xs font-bold transition-colors duration-300 ${
                   !esPerdida ? 'text-white' : 'text-[#718096] hover:text-[#2D3748]'
                 }`}
@@ -217,7 +234,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
                   </div>
                 </div>
 
-                {/* Parte 2: Subida de imagen con contorno y fondo reactivos */}
+                {/* Parte 2: Subida de imagen con contorno reactivo */}
                 <div className="h-[230px]">
                   <motion.div
                     onClick={() => fileInputRef.current?.click()}
@@ -338,7 +355,7 @@ export default function ModalPublicacion({ isOpen, onClose, onSuccess, onOpenMap
                     rows={2}
                     value={formData.caracteristicas}
                     onChange={(e) => handleChange('caracteristicas', e.target.value)}
-                    placeholder="Color de pelaje, manchas, color del collar, etc..."
+                    placeholder="Color de pelaje, manchas, collar, cicatrices, comportamiento..."
                     className="w-full rounded-xl bg-white/60 backdrop-blur-md border border-white/80 p-2.5 text-xs text-[#2D3748] font-medium outline-none resize-none transition-all duration-200 focus:bg-white/90 focus:border-[#FF7A59]"
                   />
                 </div>
