@@ -2,13 +2,17 @@ package app.presenter;
 
 import app.Response;
 import app.business.PublicacionService;
+import app.model.dto.BusquedaPublicacionRequest;
 import app.model.dto.PublicacionRequest;
 import app.model.dto.PublicacionResponse;
+import app.model.enums.Especie;
 import app.model.enums.TipoPublicacion;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/publicaciones")
@@ -21,7 +25,7 @@ public class PublicacionPresenter {
         this.publicacionService = publicacionService;
     }
 
-    // Endpoint genérico
+    // Endpoint genérico de creación
     @PostMapping
     public ResponseEntity<Response> crearPublicacion(
             @RequestBody PublicacionRequest request,
@@ -50,14 +54,50 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint para consultar una publicación
+    // Endpoint para buscar publicaciones por criterios (Tarjeta 4.1.3)
+    @GetMapping("/buscar")
+    public ResponseEntity<Response> buscarPublicaciones(
+            @RequestParam(required = false) Especie especie,
+            @RequestParam(required = false) TipoPublicacion tipoPublicacion,
+            @RequestParam(required = false) String fecha) {
+
+        try {
+            BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
+            request.setEspecie(especie);
+            request.setTipoPublicacion(tipoPublicacion);
+            request.setFecha(fecha);
+
+            List<PublicacionResponse> resultados = publicacionService.buscar(request);
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Publicaciones encontradas exitosamente",
+                    resultados
+            );
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(
+                    HttpStatus.BAD_REQUEST,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error al buscar publicaciones",
+                    null
+            );
+        }
+    }
+
+    // Endpoint para consultar una publicación por ID
     @GetMapping("/{id}")
     public ResponseEntity<Response> consultarPublicacion(
             @PathVariable Long id) {
 
         try {
-            PublicacionResponse respuesta =
-                    publicacionService.consultar(id);
+            PublicacionResponse respuesta = publicacionService.consultar(id);
 
             return Response.response(
                     HttpStatus.OK,
@@ -81,7 +121,7 @@ public class PublicacionPresenter {
         }
     }
 
-    // Método auxiliar para centralizar el manejo de respuestas
+    // Método auxiliar para centralizar el manejo de respuestas al guardar
     private ResponseEntity<Response> procesarGuardado(
             PublicacionRequest request,
             Authentication authentication) {

@@ -7,6 +7,9 @@ import app.model.dto.PublicacionResponse;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
+import app.model.dto.BusquedaPublicacionRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.Authentication;
@@ -105,4 +108,28 @@ public class PublicacionService {
         return Math.round(coordenada * 100.0) / 100.0;
     }
 
+    @Transactional(readOnly = true)
+    public List<PublicacionResponse> buscar(BusquedaPublicacionRequest request) {
+        List<Publicacion> publicaciones = publicacionRepository.findAll();
+
+        return publicaciones.stream()
+                .filter(p -> request.getEspecie() == null || p.getEspecie() == request.getEspecie())
+                .filter(p -> request.getTipoPublicacion() == null
+                        || p.getTipoPublicacion() == request.getTipoPublicacion())
+                .filter(p -> request.getFecha() == null || request.getFecha().isBlank()
+                        || p.getFecha().contains(request.getFecha()))
+                .map(p -> new PublicacionResponse(
+                        p.getId(),
+                        p.getTipoPublicacion(),
+                        p.getEspecie(),
+                        p.getRaza(),
+                        p.getEdad(),
+                        p.getFecha(),
+                        p.getCaracteristicas(),
+                        p.getFotografia(),
+                        aproximarCoordenada(p.getLatitud()),
+                        aproximarCoordenada(p.getLongitud()),
+                        p.getFechaCreacion()))
+                .collect(Collectors.toList());
+    }
 }
