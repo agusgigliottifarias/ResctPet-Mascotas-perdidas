@@ -23,7 +23,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/publicaciones/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/publicaciones/**").authenticated()
                         .anyRequest().permitAll()
-                );
+                )
+                .httpBasic(httpBasic -> {});
 
         return http.build();
     }
