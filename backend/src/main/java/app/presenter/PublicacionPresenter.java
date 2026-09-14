@@ -54,18 +54,22 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint para buscar publicaciones por criterios (Tarjeta 4.1.3)
+    // Endpoint para buscar publicaciones por criterios (Tarjeta 4.1.3 y 4.1.4)
     @GetMapping("/buscar")
     public ResponseEntity<Response> buscarPublicaciones(
             @RequestParam(required = false) Especie especie,
             @RequestParam(required = false) TipoPublicacion tipoPublicacion,
-            @RequestParam(required = false) String fecha) {
+            @RequestParam(required = false) String fecha,
+            @RequestParam(required = false) String raza,
+            @RequestParam(required = false) String caracteristicas) {
 
         try {
             BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
             request.setEspecie(especie);
             request.setTipoPublicacion(tipoPublicacion);
             request.setFecha(fecha);
+            request.setRaza(raza);
+            request.setCaracteristicas(caracteristicas);
 
             List<PublicacionResponse> resultados = publicacionService.buscar(request);
 

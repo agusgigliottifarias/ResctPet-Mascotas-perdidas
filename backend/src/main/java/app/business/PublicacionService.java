@@ -2,17 +2,18 @@ package app.business;
 
 import app.model.Publicacion;
 import app.model.Usuario;
+import app.model.dto.BusquedaPublicacionRequest;
 import app.model.dto.PublicacionRequest;
 import app.model.dto.PublicacionResponse;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
-import app.model.dto.BusquedaPublicacionRequest;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.Authentication;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PublicacionService {
@@ -101,13 +102,6 @@ public class PublicacionService {
                 publicacion.getFechaCreacion());
     }
 
-    private Double aproximarCoordenada(Double coordenada) {
-        if (coordenada == null) {
-            return null;
-        }
-        return Math.round(coordenada * 100.0) / 100.0;
-    }
-
     @Transactional(readOnly = true)
     public List<PublicacionResponse> buscar(BusquedaPublicacionRequest request) {
         List<Publicacion> publicaciones = publicacionRepository.findAll();
@@ -118,6 +112,14 @@ public class PublicacionService {
                         || p.getTipoPublicacion() == request.getTipoPublicacion())
                 .filter(p -> request.getFecha() == null || request.getFecha().isBlank()
                         || p.getFecha().contains(request.getFecha()))
+                .filter(p -> request.getRaza() == null || request.getRaza().isBlank()
+                        || (p.getRaza() != null && p.getRaza().toLowerCase().contains(request.getRaza().toLowerCase())))
+                .filter(p -> request.getCaracteristicas() == null || request.getCaracteristicas().isBlank()
+                        || (p.getCaracteristicas() != null && p.getCaracteristicas().toLowerCase().contains(request.getCaracteristicas().toLowerCase())))
+                .sorted((p1, p2) -> {
+                    if (p1.getFechaCreacion() == null || p2.getFechaCreacion() == null) return 0;
+                    return p2.getFechaCreacion().compareTo(p1.getFechaCreacion());
+                })
                 .map(p -> new PublicacionResponse(
                         p.getId(),
                         p.getTipoPublicacion(),
@@ -131,5 +133,12 @@ public class PublicacionService {
                         aproximarCoordenada(p.getLongitud()),
                         p.getFechaCreacion()))
                 .collect(Collectors.toList());
+    }
+
+    private Double aproximarCoordenada(Double coordenada) {
+        if (coordenada == null) {
+            return null;
+        }
+        return Math.round(coordenada * 100.0) / 100.0;
     }
 }
