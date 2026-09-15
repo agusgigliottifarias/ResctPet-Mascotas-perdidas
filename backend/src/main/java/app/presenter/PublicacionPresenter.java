@@ -34,27 +34,27 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint específico para mascotas perdidas
     @PostMapping("/perdidas")
     public ResponseEntity<Response> crearPublicacionPerdida(
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
         request.setTipoPublicacion(TipoPublicacion.PERDIDA);
+
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint específico para mascotas encontradas
     @PostMapping("/encontradas")
     public ResponseEntity<Response> crearPublicacionEncontrada(
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
         request.setTipoPublicacion(TipoPublicacion.ENCONTRADA);
+
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint para buscar publicaciones por criterios (Tarjeta 4.1.3, 4.1.4 y 4.1.6)
+    // Endpoint para buscar publicaciones por criterios
     @GetMapping("/buscar")
     public ResponseEntity<Response> buscarPublicaciones(
             @RequestParam(required = false) Especie especie,
@@ -64,14 +64,17 @@ public class PublicacionPresenter {
             @RequestParam(required = false) String caracteristicas) {
 
         try {
-            BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
+            BusquedaPublicacionRequest request =
+                    new BusquedaPublicacionRequest();
+
             request.setEspecie(especie);
             request.setTipoPublicacion(tipoPublicacion);
             request.setFecha(fecha);
             request.setRaza(raza);
             request.setCaracteristicas(caracteristicas);
 
-            List<PublicacionResponse> resultados = publicacionService.buscar(request);
+            List<PublicacionResponse> resultados =
+                    publicacionService.buscar(request);
 
             if (resultados.isEmpty()) {
                 return Response.response(
@@ -103,16 +106,14 @@ public class PublicacionPresenter {
         }
     }
 
-    // Endpoint para filtrar publicaciones por especie (Tarjeta 4.2.3)
+    // Endpoint para filtrar publicaciones por especie
     @GetMapping("/especie/{especie}")
     public ResponseEntity<Response> obtenerPorEspecie(
             @PathVariable Especie especie) {
 
         try {
-            BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
-            request.setEspecie(especie);
-
-            List<PublicacionResponse> resultados = publicacionService.buscar(request);
+            List<PublicacionResponse> resultados =
+                    publicacionService.buscarPorEspecie(especie);
 
             if (resultados.isEmpty()) {
                 return Response.response(
@@ -144,13 +145,13 @@ public class PublicacionPresenter {
         }
     }
 
-    // Endpoint para consultar una publicación por ID
     @GetMapping("/{id}")
     public ResponseEntity<Response> consultarPublicacion(
             @PathVariable Long id) {
 
         try {
-            PublicacionResponse respuesta = publicacionService.consultar(id);
+            PublicacionResponse respuesta =
+                    publicacionService.consultar(id);
 
             return Response.response(
                     HttpStatus.OK,
@@ -174,7 +175,6 @@ public class PublicacionPresenter {
         }
     }
 
-    // Método auxiliar para centralizar el manejo de respuestas al guardar
     private ResponseEntity<Response> procesarGuardado(
             PublicacionRequest request,
             Authentication authentication) {

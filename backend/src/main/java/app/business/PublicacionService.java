@@ -5,6 +5,7 @@ import app.model.Usuario;
 import app.model.dto.BusquedaPublicacionRequest;
 import app.model.dto.PublicacionRequest;
 import app.model.dto.PublicacionResponse;
+import app.model.enums.Especie;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
@@ -104,21 +105,72 @@ public class PublicacionService {
 
     @Transactional(readOnly = true)
     public List<PublicacionResponse> buscar(BusquedaPublicacionRequest request) {
+
         List<Publicacion> publicaciones = publicacionRepository.findAll();
 
         return publicaciones.stream()
-                .filter(p -> request.getEspecie() == null || p.getEspecie() == request.getEspecie())
+                .filter(p -> request.getEspecie() == null
+                        || p.getEspecie() == request.getEspecie())
                 .filter(p -> request.getTipoPublicacion() == null
                         || p.getTipoPublicacion() == request.getTipoPublicacion())
-                .filter(p -> request.getFecha() == null || request.getFecha().isBlank()
+                .filter(p -> request.getFecha() == null
+                        || request.getFecha().isBlank()
                         || p.getFecha().contains(request.getFecha()))
-                .filter(p -> request.getRaza() == null || request.getRaza().isBlank()
-                        || (p.getRaza() != null && p.getRaza().toLowerCase().contains(request.getRaza().toLowerCase())))
-                .filter(p -> request.getCaracteristicas() == null || request.getCaracteristicas().isBlank()
-                        || (p.getCaracteristicas() != null && p.getCaracteristicas().toLowerCase().contains(request.getCaracteristicas().toLowerCase())))
+                .filter(p -> request.getRaza() == null
+                        || request.getRaza().isBlank()
+                        || (p.getRaza() != null
+                        && p.getRaza().toLowerCase()
+                        .contains(request.getRaza().toLowerCase())))
+                .filter(p -> request.getCaracteristicas() == null
+                        || request.getCaracteristicas().isBlank()
+                        || (p.getCaracteristicas() != null
+                        && p.getCaracteristicas().toLowerCase()
+                        .contains(request.getCaracteristicas().toLowerCase())))
                 .sorted((p1, p2) -> {
-                    if (p1.getFechaCreacion() == null || p2.getFechaCreacion() == null) return 0;
-                    return p2.getFechaCreacion().compareTo(p1.getFechaCreacion());
+                    if (p1.getFechaCreacion() == null
+                            || p2.getFechaCreacion() == null) {
+                        return 0;
+                    }
+
+                    return p2.getFechaCreacion()
+                            .compareTo(p1.getFechaCreacion());
+                })
+                .map(p -> new PublicacionResponse(
+                        p.getId(),
+                        p.getTipoPublicacion(),
+                        p.getEspecie(),
+                        p.getRaza(),
+                        p.getEdad(),
+                        p.getFecha(),
+                        p.getCaracteristicas(),
+                        p.getFotografia(),
+                        aproximarCoordenada(p.getLatitud()),
+                        aproximarCoordenada(p.getLongitud()),
+                        p.getFechaCreacion()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Filtra las publicaciones por especie.
+     */
+    @Transactional(readOnly = true)
+    public List<PublicacionResponse> buscarPorEspecie(Especie especie) {
+
+        if (especie == null) {
+            throw new IllegalArgumentException(
+                    "La especie es obligatoria para realizar el filtro");
+        }
+
+        return publicacionRepository.findAll().stream()
+                .filter(p -> p.getEspecie() == especie)
+                .sorted((p1, p2) -> {
+                    if (p1.getFechaCreacion() == null
+                            || p2.getFechaCreacion() == null) {
+                        return 0;
+                    }
+
+                    return p2.getFechaCreacion()
+                            .compareTo(p1.getFechaCreacion());
                 })
                 .map(p -> new PublicacionResponse(
                         p.getId(),
@@ -136,9 +188,11 @@ public class PublicacionService {
     }
 
     private Double aproximarCoordenada(Double coordenada) {
+
         if (coordenada == null) {
             return null;
         }
+
         return Math.round(coordenada * 100.0) / 100.0;
     }
 }
