@@ -31,3 +31,12 @@ export const getPublicacionPorId = async (id) => {
   const response = await axiosClient.get(`/api/publicaciones/${id}`);
   return response.data;
 };
+
+/**
+ * Busca publicaciones por criterios (Tarjeta 4.1.7)
+ * @param {Object} params - { especie, tipoPublicacion, fecha, raza, caracteristicas }
+ */
+export const buscarPublicaciones = async (params = {}) => {
+  const response = await axiosClient.get('/api/publicaciones/buscar', { params });
+  return response.data;
+};
