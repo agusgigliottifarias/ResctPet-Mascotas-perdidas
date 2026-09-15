@@ -9,8 +9,8 @@ import app.model.enums.Especie;
 import app.model.enums.TipoPublicacion;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,7 +25,6 @@ public class PublicacionPresenter {
         this.publicacionService = publicacionService;
     }
 
-    // Endpoint genérico de creación
     @PostMapping
     public ResponseEntity<Response> crearPublicacion(
             @RequestBody PublicacionRequest request,
@@ -54,7 +53,9 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint para buscar publicaciones por criterios
+    /**
+     * Búsqueda de publicaciones combinando especie y los demás criterios.
+     */
     @GetMapping("/buscar")
     public ResponseEntity<Response> buscarPublicaciones(
             @RequestParam(required = false) Especie especie,
@@ -106,7 +107,6 @@ public class PublicacionPresenter {
         }
     }
 
-    // Endpoint para filtrar publicaciones por especie
     @GetMapping("/especie/{especie}")
     public ResponseEntity<Response> obtenerPorEspecie(
             @PathVariable Especie especie) {

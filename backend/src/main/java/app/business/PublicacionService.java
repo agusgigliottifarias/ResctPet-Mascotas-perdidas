@@ -9,9 +9,9 @@ import app.model.enums.Especie;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,9 +86,6 @@ public class PublicacionService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No se encontró la publicación con ID: " + id));
 
-        Double latitudAproximada = aproximarCoordenada(publicacion.getLatitud());
-        Double longitudAproximada = aproximarCoordenada(publicacion.getLongitud());
-
         return new PublicacionResponse(
                 publicacion.getId(),
                 publicacion.getTipoPublicacion(),
@@ -98,34 +95,51 @@ public class PublicacionService {
                 publicacion.getFecha(),
                 publicacion.getCaracteristicas(),
                 publicacion.getFotografia(),
-                latitudAproximada,
-                longitudAproximada,
+                aproximarCoordenada(publicacion.getLatitud()),
+                aproximarCoordenada(publicacion.getLongitud()),
                 publicacion.getFechaCreacion());
     }
 
+    /**
+     * Búsqueda general combinando todos los criterios disponibles.
+     */
     @Transactional(readOnly = true)
-    public List<PublicacionResponse> buscar(BusquedaPublicacionRequest request) {
+    public List<PublicacionResponse> buscar(
+            BusquedaPublicacionRequest request) {
 
-        List<Publicacion> publicaciones = publicacionRepository.findAll();
+        List<Publicacion> publicaciones =
+                publicacionRepository.findAll();
 
         return publicaciones.stream()
+
+                // Filtro por especie
                 .filter(p -> request.getEspecie() == null
                         || p.getEspecie() == request.getEspecie())
+
+                // Filtro por tipo de publicación
                 .filter(p -> request.getTipoPublicacion() == null
-                        || p.getTipoPublicacion() == request.getTipoPublicacion())
+                        || p.getTipoPublicacion()
+                        == request.getTipoPublicacion())
+
+                // Filtro por fecha
                 .filter(p -> request.getFecha() == null
                         || request.getFecha().isBlank()
                         || p.getFecha().contains(request.getFecha()))
+
+                // Filtro por raza
                 .filter(p -> request.getRaza() == null
                         || request.getRaza().isBlank()
                         || (p.getRaza() != null
                         && p.getRaza().toLowerCase()
                         .contains(request.getRaza().toLowerCase())))
+
+                // Filtro por características
                 .filter(p -> request.getCaracteristicas() == null
                         || request.getCaracteristicas().isBlank()
                         || (p.getCaracteristicas() != null
                         && p.getCaracteristicas().toLowerCase()
                         .contains(request.getCaracteristicas().toLowerCase())))
+
                 .sorted((p1, p2) -> {
                     if (p1.getFechaCreacion() == null
                             || p2.getFechaCreacion() == null) {
@@ -135,6 +149,7 @@ public class PublicacionService {
                     return p2.getFechaCreacion()
                             .compareTo(p1.getFechaCreacion());
                 })
+
                 .map(p -> new PublicacionResponse(
                         p.getId(),
                         p.getTipoPublicacion(),
@@ -147,14 +162,16 @@ public class PublicacionService {
                         aproximarCoordenada(p.getLatitud()),
                         aproximarCoordenada(p.getLongitud()),
                         p.getFechaCreacion()))
+
                 .collect(Collectors.toList());
     }
 
     /**
-     * Filtra las publicaciones por especie.
+     * Filtra las publicaciones únicamente por especie.
      */
     @Transactional(readOnly = true)
-    public List<PublicacionResponse> buscarPorEspecie(Especie especie) {
+    public List<PublicacionResponse> buscarPorEspecie(
+            Especie especie) {
 
         if (especie == null) {
             throw new IllegalArgumentException(
