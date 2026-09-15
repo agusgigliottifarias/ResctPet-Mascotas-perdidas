@@ -54,7 +54,7 @@ public class PublicacionPresenter {
         return procesarGuardado(request, authentication);
     }
 
-    // Endpoint para buscar publicaciones por criterios
+    // Endpoint para buscar publicaciones por criterios (Tarjeta 4.1.3, 4.1.4 y 4.1.6)
     @GetMapping("/buscar")
     public ResponseEntity<Response> buscarPublicaciones(
             @RequestParam(required = false) Especie especie,
@@ -65,17 +65,14 @@ public class PublicacionPresenter {
 
         try {
             BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
-
             request.setEspecie(especie);
             request.setTipoPublicacion(tipoPublicacion);
             request.setFecha(fecha);
             request.setRaza(raza);
             request.setCaracteristicas(caracteristicas);
 
-            List<PublicacionResponse> resultados =
-                    publicacionService.buscar(request);
+            List<PublicacionResponse> resultados = publicacionService.buscar(request);
 
-            // Manejo de búsqueda sin resultados
             if (resultados.isEmpty()) {
                 return Response.response(
                         HttpStatus.OK,
@@ -106,14 +103,54 @@ public class PublicacionPresenter {
         }
     }
 
+    // Endpoint para filtrar publicaciones por especie (Tarjeta 4.2.3)
+    @GetMapping("/especie/{especie}")
+    public ResponseEntity<Response> obtenerPorEspecie(
+            @PathVariable Especie especie) {
+
+        try {
+            BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
+            request.setEspecie(especie);
+
+            List<PublicacionResponse> resultados = publicacionService.buscar(request);
+
+            if (resultados.isEmpty()) {
+                return Response.response(
+                        HttpStatus.OK,
+                        "No se encontraron publicaciones para la especie " + especie,
+                        resultados
+                );
+            }
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Publicaciones encontradas exitosamente para la especie " + especie,
+                    resultados
+            );
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(
+                    HttpStatus.BAD_REQUEST,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error al filtrar por especie",
+                    null
+            );
+        }
+    }
+
     // Endpoint para consultar una publicación por ID
     @GetMapping("/{id}")
     public ResponseEntity<Response> consultarPublicacion(
             @PathVariable Long id) {
 
         try {
-            PublicacionResponse respuesta =
-                    publicacionService.consultar(id);
+            PublicacionResponse respuesta = publicacionService.consultar(id);
 
             return Response.response(
                     HttpStatus.OK,
