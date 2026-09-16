@@ -9,6 +9,7 @@ import app.model.enums.Especie;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +23,19 @@ public class PublicacionService {
     private final PublicacionRepository publicacionRepository;
     private final UsuarioRepository usuarioRepository;
 
+    @Value("${rescpet.busqueda.radio-mvp-km:5.0}")
+    private double radioMvpKm;
+
     public PublicacionService(
             PublicacionRepository publicacionRepository,
             UsuarioRepository usuarioRepository) {
 
         this.publicacionRepository = publicacionRepository;
         this.usuarioRepository = usuarioRepository;
+    }
+
+    public double getRadioMvpKm() {
+        return radioMvpKm;
     }
 
     @Transactional
