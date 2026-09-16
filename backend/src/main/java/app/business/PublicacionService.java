@@ -212,6 +212,61 @@ public class PublicacionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Búsqueda por cercanía geográfica calculando distancia Haversine.
+     */
+    @Transactional(readOnly = true)
+    public List<PublicacionResponse> buscarPorCercania(
+            Double latitud,
+            Double longitud,
+            Double radioKm) {
+
+        if (latitud == null || latitud < -90.0 || latitud > 90.0) {
+            throw new IllegalArgumentException("La latitud debe estar entre -90 y 90");
+        }
+
+        if (longitud == null || longitud < -180.0 || longitud > 180.0) {
+            throw new IllegalArgumentException("La longitud debe estar entre -180 y 180");
+        }
+
+        double radioEfectivo = (radioKm != null && radioKm > 0) ? radioKm : radioMvpKm;
+
+        List<Publicacion> publicaciones = publicacionRepository.findAll();
+
+        return publicaciones.stream()
+                .filter(p -> p.getLatitud() != null && p.getLongitud() != null)
+                .filter(p -> calcularDistanciaKm(latitud, longitud, p.getLatitud(), p.getLongitud()) <= radioEfectivo)
+                .sorted((p1, p2) -> {
+                    double d1 = calcularDistanciaKm(latitud, longitud, p1.getLatitud(), p1.getLongitud());
+                    double d2 = calcularDistanciaKm(latitud, longitud, p2.getLatitud(), p2.getLongitud());
+                    return Double.compare(d1, d2);
+                })
+                .map(p -> new PublicacionResponse(
+                        p.getId(),
+                        p.getTipoPublicacion(),
+                        p.getEspecie(),
+                        p.getRaza(),
+                        p.getEdad(),
+                        p.getFecha(),
+                        p.getCaracteristicas(),
+                        p.getFotografia(),
+                        aproximarCoordenada(p.getLatitud()),
+                        aproximarCoordenada(p.getLongitud()),
+                        p.getFechaCreacion()))
+                .collect(Collectors.toList());
+    }
+
+    private double calcularDistanciaKm(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radio de la Tierra en km
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
     private Double aproximarCoordenada(Double coordenada) {
 
         if (coordenada == null) {

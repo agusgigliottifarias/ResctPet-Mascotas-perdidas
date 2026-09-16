@@ -145,6 +145,49 @@ public class PublicacionPresenter {
         }
     }
 
+    /**
+     * Endpoint de búsqueda por cercanía geográfica (Tarjeta 4.3.3)
+     */
+    @GetMapping("/cercania")
+    public ResponseEntity<Response> obtenerPorCercania(
+            @RequestParam Double latitud,
+            @RequestParam Double longitud,
+            @RequestParam(required = false) Double radioKm) {
+
+        try {
+            List<PublicacionResponse> resultados =
+                    publicacionService.buscarPorCercania(latitud, longitud, radioKm);
+
+            if (resultados.isEmpty()) {
+                return Response.response(
+                        HttpStatus.OK,
+                        "No se encontraron publicaciones cercanas en el radio especificado",
+                        resultados
+                );
+            }
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Publicaciones cercanas encontradas exitosamente",
+                    resultados
+            );
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(
+                    HttpStatus.BAD_REQUEST,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error al buscar publicaciones por cercanía",
+                    null
+            );
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Response> consultarPublicacion(
             @PathVariable Long id) {
