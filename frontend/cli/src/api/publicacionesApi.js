@@ -40,3 +40,12 @@ export const buscarPublicaciones = async (params = {}) => {
   const response = await axiosClient.get('/api/publicaciones/buscar', { params });
   return response.data;
 };
+
+/**
+ * Obtiene publicaciones filtradas por especie (Tarjeta 4.2.7)
+ * @param {string} especie - PERRO, GATO, etc.
+ */
+export const getPublicacionesPorEspecie = async (especie) => {
+  const response = await axiosClient.get(`/api/publicaciones/especie/${especie}`);
+  return response.data;
+};
