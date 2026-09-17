@@ -213,7 +213,7 @@ public class PublicacionService {
     }
 
     /**
-     * Búsqueda por cercanía geográfica calculando distancia Haversine.
+     * Lógica de consulta geográfica utilizando Bounding Box en DB y Haversine (Tarjeta 4.3.4)
      */
     @Transactional(readOnly = true)
     public List<PublicacionResponse> buscarPorCercania(
@@ -231,9 +231,21 @@ public class PublicacionService {
 
         double radioEfectivo = (radioKm != null && radioKm > 0) ? radioKm : radioMvpKm;
 
-        List<Publicacion> publicaciones = publicacionRepository.findAll();
+        // 1. Calcular Bounding Box (delimitación geográfica)
+        double deltaLat = radioEfectivo / 111.12;
+        double deltaLon = radioEfectivo / (111.12 * Math.cos(Math.toRadians(latitud)));
 
-        return publicaciones.stream()
+        double latMin = latitud - deltaLat;
+        double latMax = latitud + deltaLat;
+        double lonMin = longitud - deltaLon;
+        double lonMax = longitud + deltaLon;
+
+        // 2. Consulta a nivel base de datos por rango de coordenadas (Bounding Box)
+        List<Publicacion> candidatos = publicacionRepository
+                .findByLatitudBetweenAndLongitudBetween(latMin, latMax, lonMin, lonMax);
+
+        // 3. Filtrado por distancia radial exacta (Haversine) y ordenamiento por cercanía
+        return candidatos.stream()
                 .filter(p -> p.getLatitud() != null && p.getLongitud() != null)
                 .filter(p -> calcularDistanciaKm(latitud, longitud, p.getLatitud(), p.getLongitud()) <= radioEfectivo)
                 .sorted((p1, p2) -> {
