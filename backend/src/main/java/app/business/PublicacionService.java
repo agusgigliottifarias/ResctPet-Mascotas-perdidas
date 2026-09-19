@@ -68,7 +68,8 @@ public class PublicacionService {
 
         Publicacion guardada = publicacionRepository.save(publicacion);
 
-        // Retornamos las coordenadas redondeadas a 2 decimales para proteger la privacidad
+        // Retornamos las coordenadas redondeadas a 2 decimales
+        // para proteger la privacidad
         return new PublicacionResponse(
                 guardada.getId(),
                 guardada.getTipoPublicacion(),
@@ -110,11 +111,48 @@ public class PublicacionService {
     }
 
     /**
-     * Búsqueda general combinando todos los criterios disponibles.
+     * Búsqueda general combinando todos los criterios disponibles,
+     * incluyendo el filtro de cercanía geográfica.
      */
     @Transactional(readOnly = true)
     public List<PublicacionResponse> buscar(
             BusquedaPublicacionRequest request) {
+
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Los criterios de búsqueda son obligatorios");
+        }
+
+        // Si se proporciona una ubicación, se validan las coordenadas.
+        boolean aplicarFiltroGeografico =
+                request.getLatitud() != null
+                        && request.getLongitud() != null;
+
+        if (aplicarFiltroGeografico) {
+
+            if (request.getLatitud() < -90.0
+                    || request.getLatitud() > 90.0) {
+                throw new IllegalArgumentException(
+                        "La latitud debe estar entre -90 y 90");
+            }
+
+            if (request.getLongitud() < -180.0
+                    || request.getLongitud() > 180.0) {
+                throw new IllegalArgumentException(
+                        "La longitud debe estar entre -180 y 180");
+            }
+
+            if (request.getRadioKm() != null
+                    && request.getRadioKm() <= 0) {
+                throw new IllegalArgumentException(
+                        "El radio debe ser mayor a 0");
+            }
+        }
+
+        double radioEfectivo =
+                (request.getRadioKm() != null && request.getRadioKm() > 0)
+                        ? request.getRadioKm()
+                        : radioMvpKm;
 
         List<Publicacion> publicaciones =
                 publicacionRepository.findAll();
@@ -149,7 +187,18 @@ public class PublicacionService {
                         && p.getCaracteristicas().toLowerCase()
                         .contains(request.getCaracteristicas().toLowerCase())))
 
+                // Filtro geográfico combinado con los demás criterios
+                .filter(p -> !aplicarFiltroGeografico
+                        || (p.getLatitud() != null
+                        && p.getLongitud() != null
+                        && calcularDistanciaKm(
+                        request.getLatitud(),
+                        request.getLongitud(),
+                        p.getLatitud(),
+                        p.getLongitud()) <= radioEfectivo))
+
                 .sorted((p1, p2) -> {
+
                     if (p1.getFechaCreacion() == null
                             || p2.getFechaCreacion() == null) {
                         return 0;
@@ -190,6 +239,7 @@ public class PublicacionService {
         return publicacionRepository.findAll().stream()
                 .filter(p -> p.getEspecie() == especie)
                 .sorted((p1, p2) -> {
+
                     if (p1.getFechaCreacion() == null
                             || p2.getFechaCreacion() == null) {
                         return 0;
@@ -214,7 +264,7 @@ public class PublicacionService {
     }
 
     /**
-     * Lógica de consulta geográfica utilizando Bounding Box en DB y Haversine (Tarjeta 4.3.4)
+     * Búsqueda de publicaciones por cercanía geográfica.
      */
     @Transactional(readOnly = true)
     public List<PublicacionResponse> buscarPorCercania(
@@ -223,37 +273,66 @@ public class PublicacionService {
             Double radioKm) {
 
         if (latitud == null || latitud < -90.0 || latitud > 90.0) {
-            throw new IllegalArgumentException("La latitud debe estar entre -90 y 90");
+            throw new IllegalArgumentException(
+                    "La latitud debe estar entre -90 y 90");
         }
 
         if (longitud == null || longitud < -180.0 || longitud > 180.0) {
-            throw new IllegalArgumentException("La longitud debe estar entre -180 y 180");
+            throw new IllegalArgumentException(
+                    "La longitud debe estar entre -180 y 180");
         }
 
-        double radioEfectivo = (radioKm != null && radioKm > 0) ? radioKm : radioMvpKm;
+        double radioEfectivo =
+                (radioKm != null && radioKm > 0)
+                        ? radioKm
+                        : radioMvpKm;
 
-        // 1. Calcular Bounding Box (delimitación geográfica)
+        // Bounding Box para reducir los candidatos
         double deltaLat = radioEfectivo / 111.12;
-        double deltaLon = radioEfectivo / (111.12 * Math.cos(Math.toRadians(latitud)));
+
+        double deltaLon = radioEfectivo
+                / (111.12 * Math.cos(Math.toRadians(latitud)));
 
         double latMin = latitud - deltaLat;
         double latMax = latitud + deltaLat;
         double lonMin = longitud - deltaLon;
         double lonMax = longitud + deltaLon;
 
-        // 2. Consulta a nivel base de datos por rango de coordenadas (Bounding Box)
-        List<Publicacion> candidatos = publicacionRepository
-                .findByLatitudBetweenAndLongitudBetween(latMin, latMax, lonMin, lonMax);
+        List<Publicacion> candidatos =
+                publicacionRepository
+                        .findByLatitudBetweenAndLongitudBetween(
+                                latMin,
+                                latMax,
+                                lonMin,
+                                lonMax);
 
-        // 3. Filtrado por distancia radial exacta (Haversine) y ordenamiento por cercanía
         return candidatos.stream()
-                .filter(p -> p.getLatitud() != null && p.getLongitud() != null)
-                .filter(p -> calcularDistanciaKm(latitud, longitud, p.getLatitud(), p.getLongitud()) <= radioEfectivo)
+                .filter(p -> p.getLatitud() != null
+                        && p.getLongitud() != null)
+
+                .filter(p -> calcularDistanciaKm(
+                        latitud,
+                        longitud,
+                        p.getLatitud(),
+                        p.getLongitud()) <= radioEfectivo)
+
                 .sorted((p1, p2) -> {
-                    double d1 = calcularDistanciaKm(latitud, longitud, p1.getLatitud(), p1.getLongitud());
-                    double d2 = calcularDistanciaKm(latitud, longitud, p2.getLatitud(), p2.getLongitud());
+
+                    double d1 = calcularDistanciaKm(
+                            latitud,
+                            longitud,
+                            p1.getLatitud(),
+                            p1.getLongitud());
+
+                    double d2 = calcularDistanciaKm(
+                            latitud,
+                            longitud,
+                            p2.getLatitud(),
+                            p2.getLongitud());
+
                     return Double.compare(d1, d2);
                 })
+
                 .map(p -> new PublicacionResponse(
                         p.getId(),
                         p.getTipoPublicacion(),
@@ -266,27 +345,50 @@ public class PublicacionService {
                         aproximarCoordenada(p.getLatitud()),
                         aproximarCoordenada(p.getLongitud()),
                         p.getFechaCreacion()))
+
                 .collect(Collectors.toList());
     }
 
-    private double calcularDistanciaKm(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371; // Radio de la Tierra en km
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    private double calcularDistanciaKm(
+            double lat1,
+            double lon1,
+            double lat2,
+            double lon2) {
+
+        final int R = 6371;
+
+        double latDistance =
+                Math.toRadians(lat2 - lat1);
+
+        double lonDistance =
+                Math.toRadians(lon2 - lon1);
+
+        double a =
+                Math.sin(latDistance / 2)
+                        * Math.sin(latDistance / 2)
+                        + Math.cos(Math.toRadians(lat1))
+                        * Math.cos(Math.toRadians(lat2))
+                        * Math.sin(lonDistance / 2)
+                        * Math.sin(lonDistance / 2);
+
+        double c =
+                2 * Math.atan2(
+                        Math.sqrt(a),
+                        Math.sqrt(1 - a));
+
         return R * c;
     }
 
     /**
-     * Tarjeta 4.3.5: Redondeo a 2 decimales para no exponer la ubicación exacta del usuario.
+     * Redondeo a 2 decimales para no exponer
+     * la ubicación exacta del usuario.
      */
     private Double aproximarCoordenada(Double coordenada) {
+
         if (coordenada == null) {
             return null;
         }
+
         return Math.round(coordenada * 100.0) / 100.0;
     }
 }

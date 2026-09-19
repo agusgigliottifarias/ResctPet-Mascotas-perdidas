@@ -54,7 +54,8 @@ public class PublicacionPresenter {
     }
 
     /**
-     * Búsqueda de publicaciones combinando especie y los demás criterios.
+     * Búsqueda general combinando especie, ubicación
+     * y los demás criterios disponibles.
      */
     @GetMapping("/buscar")
     public ResponseEntity<Response> buscarPublicaciones(
@@ -62,7 +63,10 @@ public class PublicacionPresenter {
             @RequestParam(required = false) TipoPublicacion tipoPublicacion,
             @RequestParam(required = false) String fecha,
             @RequestParam(required = false) String raza,
-            @RequestParam(required = false) String caracteristicas) {
+            @RequestParam(required = false) String caracteristicas,
+            @RequestParam(required = false) Double latitud,
+            @RequestParam(required = false) Double longitud,
+            @RequestParam(required = false) Double radioKm) {
 
         try {
             BusquedaPublicacionRequest request =
@@ -73,6 +77,10 @@ public class PublicacionPresenter {
             request.setFecha(fecha);
             request.setRaza(raza);
             request.setCaracteristicas(caracteristicas);
+
+            request.setLatitud(latitud);
+            request.setLongitud(longitud);
+            request.setRadioKm(radioKm);
 
             List<PublicacionResponse> resultados =
                     publicacionService.buscar(request);
@@ -92,6 +100,7 @@ public class PublicacionPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
@@ -99,6 +108,7 @@ public class PublicacionPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al buscar publicaciones",
@@ -130,6 +140,7 @@ public class PublicacionPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
@@ -137,6 +148,7 @@ public class PublicacionPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al filtrar por especie",
@@ -146,7 +158,7 @@ public class PublicacionPresenter {
     }
 
     /**
-     * Endpoint de búsqueda por cercanía geográfica (Tarjeta 4.3.3)
+     * Endpoint de búsqueda por cercanía geográfica.
      */
     @GetMapping("/cercania")
     public ResponseEntity<Response> obtenerPorCercania(
@@ -156,7 +168,10 @@ public class PublicacionPresenter {
 
         try {
             List<PublicacionResponse> resultados =
-                    publicacionService.buscarPorCercania(latitud, longitud, radioKm);
+                    publicacionService.buscarPorCercania(
+                            latitud,
+                            longitud,
+                            radioKm);
 
             if (resultados.isEmpty()) {
                 return Response.response(
@@ -173,6 +188,7 @@ public class PublicacionPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
@@ -180,6 +196,7 @@ public class PublicacionPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al buscar publicaciones por cercanía",
@@ -203,6 +220,7 @@ public class PublicacionPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.NOT_FOUND,
                     e.getMessage(),
@@ -210,6 +228,7 @@ public class PublicacionPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al consultar la publicación",
@@ -224,7 +243,9 @@ public class PublicacionPresenter {
 
         try {
             PublicacionResponse respuesta =
-                    publicacionService.guardar(request, authentication);
+                    publicacionService.guardar(
+                            request,
+                            authentication);
 
             return Response.response(
                     HttpStatus.CREATED,
@@ -233,6 +254,7 @@ public class PublicacionPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
@@ -240,6 +262,7 @@ public class PublicacionPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al crear la publicación",
