@@ -68,6 +68,7 @@ public class PublicacionService {
 
         Publicacion guardada = publicacionRepository.save(publicacion);
 
+        // Retornamos las coordenadas redondeadas a 2 decimales para proteger la privacidad
         return new PublicacionResponse(
                 guardada.getId(),
                 guardada.getTipoPublicacion(),
@@ -77,8 +78,8 @@ public class PublicacionService {
                 guardada.getFecha(),
                 guardada.getCaracteristicas(),
                 guardada.getFotografia(),
-                guardada.getLatitud(),
-                guardada.getLongitud(),
+                aproximarCoordenada(guardada.getLatitud()),
+                aproximarCoordenada(guardada.getLongitud()),
                 guardada.getFechaCreacion());
     }
 
@@ -279,12 +280,13 @@ public class PublicacionService {
         return R * c;
     }
 
+    /**
+     * Tarjeta 4.3.5: Redondeo a 2 decimales para no exponer la ubicación exacta del usuario.
+     */
     private Double aproximarCoordenada(Double coordenada) {
-
         if (coordenada == null) {
             return null;
         }
-
         return Math.round(coordenada * 100.0) / 100.0;
     }
 }
