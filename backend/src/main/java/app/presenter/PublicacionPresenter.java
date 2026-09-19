@@ -157,7 +157,7 @@ public class PublicacionPresenter {
         }
     }
 
-    /**
+        /**
      * Endpoint de búsqueda por cercanía geográfica.
      */
     @GetMapping("/cercania")
@@ -173,6 +173,7 @@ public class PublicacionPresenter {
                             longitud,
                             radioKm);
 
+            // T - 4.3.7: Manejo de resultados sin coincidencias
             if (resultados.isEmpty()) {
                 return Response.response(
                         HttpStatus.OK,
