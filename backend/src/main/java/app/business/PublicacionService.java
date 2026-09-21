@@ -114,7 +114,7 @@ public class PublicacionService {
      * Realiza la búsqueda de coincidencias utilizando una publicación seleccionada como referencia.
      */
     @Transactional(readOnly = true)
-    public List buscarPorPublicacionSeleccionada(
+    public List<PublicacionResponse> buscarPorPublicacionSeleccionada(
             Long publicacionId,
             Double radioKm) {
 
@@ -143,7 +143,7 @@ public class PublicacionService {
      * incluyendo el filtro de cercanía geográfica.
      */
     @Transactional(readOnly = true)
-    public List buscar(
+    public List<PublicacionResponse> buscar(
             BusquedaPublicacionRequest request) {
 
         if (request == null) {
@@ -185,7 +185,7 @@ public class PublicacionService {
                         ? request.getRadioKm()
                         : radioMvpKm;
 
-        List publicaciones =
+        List<Publicacion> publicaciones =
                 publicacionRepository.findAll();
 
         return publicaciones.stream()
@@ -248,12 +248,7 @@ public class PublicacionService {
     }
 
     /**
-     * T - 4.1.5
-     *
-     * Realiza la búsqueda de publicaciones aplicando paginación
-     * sobre los resultados obtenidos luego de aplicar los filtros.
-     *
-     * La página comienza en 0.
+     * T - 4.1.5: Paginación de resultados.
      */
     @Transactional(readOnly = true)
     public PublicacionPageResponse buscarPaginado(
@@ -282,7 +277,6 @@ public class PublicacionService {
 
         int inicio = pagina * tamanio;
 
-        // La página solicitada no existe.
         if (inicio >= totalElementos) {
 
             return new PublicacionPageResponse(
@@ -315,7 +309,7 @@ public class PublicacionService {
      * Filtra las publicaciones únicamente por especie.
      */
     @Transactional(readOnly = true)
-    public List buscarPorEspecie(
+    public List<PublicacionResponse> buscarPorEspecie(
             Especie especie) {
 
         if (especie == null) {
@@ -344,7 +338,7 @@ public class PublicacionService {
      * Búsqueda de publicaciones por cercanía geográfica.
      */
     @Transactional(readOnly = true)
-    public List buscarPorCercania(
+    public List<PublicacionResponse> buscarPorCercania(
             Double latitud,
             Double longitud,
             Double radioKm) {
@@ -370,7 +364,6 @@ public class PublicacionService {
                         ? radioKm
                         : radioMvpKm;
 
-        // Bounding Box para reducir los candidatos
         double deltaLat =
                 radioEfectivo / 111.12;
 
@@ -391,7 +384,7 @@ public class PublicacionService {
         double lonMax =
                 longitud + deltaLon;
 
-        List candidatos =
+        List<Publicacion> candidatos =
                 publicacionRepository
                         .findByLatitudBetweenAndLongitudBetween(
                                 latMin,
@@ -464,8 +457,7 @@ public class PublicacionService {
     }
 
     /**
-     * Redondeo a 2 decimales para no exponer
-     * la ubicación exacta del usuario.
+     * Redondeo a 2 decimales para proteger la ubicación exacta del usuario.
      */
     private Double aproximarCoordenada(
             Double coordenada) {
@@ -479,8 +471,7 @@ public class PublicacionService {
     }
 
     /**
-     * Método auxiliar para unificar el mapeo
-     * a PublicacionResponse.
+     * Mapeo unificado a PublicacionResponse.
      */
     private PublicacionResponse mapToResponse(
             Publicacion p) {
