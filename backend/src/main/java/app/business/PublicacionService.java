@@ -6,6 +6,7 @@ import app.model.dto.BusquedaPublicacionRequest;
 import app.model.dto.PublicacionRequest;
 import app.model.dto.PublicacionResponse;
 import app.model.enums.Especie;
+import app.model.enums.TipoPublicacion;
 import app.model.validation.PublicacionValidator;
 import app.repository.PublicacionRepository;
 import app.repository.UsuarioRepository;
@@ -38,47 +39,36 @@ public class PublicacionService {
         return radioMvpKm;
     }
 
-   @Transactional
-public PublicacionResponse guardar(
-        PublicacionRequest request,
-        Authentication authentication) {
+    @Transactional
+    public PublicacionResponse guardar(
+            PublicacionRequest request,
+            Authentication authentication) {
 
-    PublicacionValidator.validar(request);
+        PublicacionValidator.validar(request);
 
-    Publicacion publicacion = new Publicacion();
+        Publicacion publicacion = new Publicacion();
 
-    publicacion.setTipoPublicacion(request.getTipoPublicacion());
-    publicacion.setEspecie(request.getEspecie());
-    publicacion.setRaza(request.getRaza());
-    publicacion.setEdad(request.getEdad());
-    publicacion.setFecha(request.getFecha());
-    publicacion.setCaracteristicas(request.getCaracteristicas());
-    publicacion.setFotografia(request.getFotografia());
-    publicacion.setLatitud(request.getLatitud());
-    publicacion.setLongitud(request.getLongitud());
+        publicacion.setTipoPublicacion(request.getTipoPublicacion());
+        publicacion.setEspecie(request.getEspecie());
+        publicacion.setRaza(request.getRaza());
+        publicacion.setEdad(request.getEdad());
+        publicacion.setFecha(request.getFecha());
+        publicacion.setCaracteristicas(request.getCaracteristicas());
+        publicacion.setFotografia(request.getFotografia());
+        publicacion.setLatitud(request.getLatitud());
+        publicacion.setLongitud(request.getLongitud());
 
-    Usuario usuario = usuarioRepository
-            .findById(request.getUsuarioId())
-            .orElseThrow(() -> new IllegalArgumentException(
-                    "El usuario indicado no existe"));
+        Usuario usuario = usuarioRepository
+                .findById(request.getUsuarioId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "El usuario indicado no existe"));
 
-    publicacion.setUsuario(usuario);
+        publicacion.setUsuario(usuario);
 
-    Publicacion guardada = publicacionRepository.save(publicacion);
+        Publicacion guardada = publicacionRepository.save(publicacion);
 
-    return new PublicacionResponse(
-            guardada.getId(),
-            guardada.getTipoPublicacion(),
-            guardada.getEspecie(),
-            guardada.getRaza(),
-            guardada.getEdad(),
-            guardada.getFecha(),
-            guardada.getCaracteristicas(),
-            guardada.getFotografia(),
-            aproximarCoordenada(guardada.getLatitud()),
-            aproximarCoordenada(guardada.getLongitud()),
-            guardada.getFechaCreacion());
-}
+        return mapToResponse(guardada);
+    }
 
     @Transactional(readOnly = true)
     public PublicacionResponse consultar(Long id) {
@@ -92,18 +82,53 @@ public PublicacionResponse guardar(
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No se encontró la publicación con ID: " + id));
 
-        return new PublicacionResponse(
-                publicacion.getId(),
-                publicacion.getTipoPublicacion(),
-                publicacion.getEspecie(),
-                publicacion.getRaza(),
-                publicacion.getEdad(),
-                publicacion.getFecha(),
-                publicacion.getCaracteristicas(),
-                publicacion.getFotografia(),
-                aproximarCoordenada(publicacion.getLatitud()),
-                aproximarCoordenada(publicacion.getLongitud()),
-                publicacion.getFechaCreacion());
+        return mapToResponse(publicacion);
+    }
+
+    /**
+     * Valida que la publicación seleccionada exista y cuente con 
+     * los datos necesarios para realizar búsquedas.
+     */
+    @Transactional(readOnly = true)
+    public Publicacion validarPublicacionSeleccionada(Long publicacionId) {
+
+        if (publicacionId == null || publicacionId <= 0) {
+            throw new IllegalArgumentException(
+                    "El ID de la publicación seleccionada debe ser un número positivo válido");
+        }
+
+        Publicacion publicacion = publicacionRepository.findById(publicacionId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "La publicación seleccionada con ID " + publicacionId + " no existe"));
+
+        if (publicacion.getLatitud() == null || publicacion.getLongitud() == null) {
+            throw new IllegalStateException(
+                    "La publicación seleccionada no posee coordenadas válidas para realizar la búsqueda");
+        }
+
+        return publicacion;
+    }
+
+    /**
+     * Realiza la búsqueda de coincidencias utilizando una publicación seleccionada como referencia.
+     */
+    @Transactional(readOnly = true)
+    public List buscarPorPublicacionSeleccionada(Long publicacionId, Double radioKm) {
+
+        Publicacion publicacionBase = validarPublicacionSeleccionada(publicacionId);
+
+        TipoPublicacion tipoBuscado = (publicacionBase.getTipoPublicacion() == TipoPublicacion.PERDIDA)
+                ? TipoPublicacion.ENCONTRADA
+                : TipoPublicacion.PERDIDA;
+
+        BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
+        request.setEspecie(publicacionBase.getEspecie());
+        request.setTipoPublicacion(tipoBuscado);
+        request.setLatitud(publicacionBase.getLatitud());
+        request.setLongitud(publicacionBase.getLongitud());
+        request.setRadioKm(radioKm);
+
+        return buscar(request);
     }
 
     /**
@@ -111,7 +136,7 @@ public PublicacionResponse guardar(
      * incluyendo el filtro de cercanía geográfica.
      */
     @Transactional(readOnly = true)
-    public List<PublicacionResponse> buscar(
+    public List buscar(
             BusquedaPublicacionRequest request) {
 
         if (request == null) {
@@ -150,7 +175,7 @@ public PublicacionResponse guardar(
                         ? request.getRadioKm()
                         : radioMvpKm;
 
-        List<Publicacion> publicaciones =
+        List publicaciones =
                 publicacionRepository.findAll();
 
         return publicaciones.stream()
@@ -204,19 +229,7 @@ public PublicacionResponse guardar(
                             .compareTo(p1.getFechaCreacion());
                 })
 
-                .map(p -> new PublicacionResponse(
-                        p.getId(),
-                        p.getTipoPublicacion(),
-                        p.getEspecie(),
-                        p.getRaza(),
-                        p.getEdad(),
-                        p.getFecha(),
-                        p.getCaracteristicas(),
-                        p.getFotografia(),
-                        aproximarCoordenada(p.getLatitud()),
-                        aproximarCoordenada(p.getLongitud()),
-                        p.getFechaCreacion()))
-
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -224,7 +237,7 @@ public PublicacionResponse guardar(
      * Filtra las publicaciones únicamente por especie.
      */
     @Transactional(readOnly = true)
-    public List<PublicacionResponse> buscarPorEspecie(
+    public List buscarPorEspecie(
             Especie especie) {
 
         if (especie == null) {
@@ -244,18 +257,7 @@ public PublicacionResponse guardar(
                     return p2.getFechaCreacion()
                             .compareTo(p1.getFechaCreacion());
                 })
-                .map(p -> new PublicacionResponse(
-                        p.getId(),
-                        p.getTipoPublicacion(),
-                        p.getEspecie(),
-                        p.getRaza(),
-                        p.getEdad(),
-                        p.getFecha(),
-                        p.getCaracteristicas(),
-                        p.getFotografia(),
-                        aproximarCoordenada(p.getLatitud()),
-                        aproximarCoordenada(p.getLongitud()),
-                        p.getFechaCreacion()))
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -263,7 +265,7 @@ public PublicacionResponse guardar(
      * Búsqueda de publicaciones por cercanía geográfica.
      */
     @Transactional(readOnly = true)
-    public List<PublicacionResponse> buscarPorCercania(
+    public List buscarPorCercania(
             Double latitud,
             Double longitud,
             Double radioKm) {
@@ -294,7 +296,7 @@ public PublicacionResponse guardar(
         double lonMin = longitud - deltaLon;
         double lonMax = longitud + deltaLon;
 
-        List<Publicacion> candidatos =
+        List candidatos =
                 publicacionRepository
                         .findByLatitudBetweenAndLongitudBetween(
                                 latMin,
@@ -329,19 +331,7 @@ public PublicacionResponse guardar(
                     return Double.compare(d1, d2);
                 })
 
-                .map(p -> new PublicacionResponse(
-                        p.getId(),
-                        p.getTipoPublicacion(),
-                        p.getEspecie(),
-                        p.getRaza(),
-                        p.getEdad(),
-                        p.getFecha(),
-                        p.getCaracteristicas(),
-                        p.getFotografia(),
-                        aproximarCoordenada(p.getLatitud()),
-                        aproximarCoordenada(p.getLongitud()),
-                        p.getFechaCreacion()))
-
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -386,5 +376,24 @@ public PublicacionResponse guardar(
         }
 
         return Math.round(coordenada * 100.0) / 100.0;
+    }
+
+    /**
+     * Método auxiliar para unificar el mapeo a PublicacionResponse
+     */
+    private PublicacionResponse mapToResponse(Publicacion p) {
+        return new PublicacionResponse(
+                p.getId(),
+                p.getTipoPublicacion(),
+                p.getEspecie(),
+                p.getRaza(),
+                p.getEdad(),
+                p.getFecha(),
+                p.getCaracteristicas(),
+                p.getFotografia(),
+                aproximarCoordenada(p.getLatitud()),
+                aproximarCoordenada(p.getLongitud()),
+                p.getFechaCreacion()
+        );
     }
 }

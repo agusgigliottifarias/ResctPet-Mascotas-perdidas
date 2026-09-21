@@ -27,7 +27,7 @@ public class Publicacion {
 
     @Column(length = 50)
     private String edad;
-    
+
     @Column(nullable = false)
     private String fecha;
 

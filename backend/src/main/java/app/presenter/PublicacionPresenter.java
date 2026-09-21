@@ -26,7 +26,7 @@ public class PublicacionPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Response> crearPublicacion(
+    public ResponseEntity crearPublicacion(
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
@@ -34,7 +34,7 @@ public class PublicacionPresenter {
     }
 
     @PostMapping("/perdidas")
-    public ResponseEntity<Response> crearPublicacionPerdida(
+    public ResponseEntity crearPublicacionPerdida(
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
@@ -44,7 +44,7 @@ public class PublicacionPresenter {
     }
 
     @PostMapping("/encontradas")
-    public ResponseEntity<Response> crearPublicacionEncontrada(
+    public ResponseEntity crearPublicacionEncontrada(
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
@@ -54,11 +54,63 @@ public class PublicacionPresenter {
     }
 
     /**
+     * T - 5.1.4: Endpoint para validar la publicación seleccionada y ejecutar la búsqueda.
+     */
+    @GetMapping("/{id}/validar-y-buscar")
+    public ResponseEntity buscarPorPublicacionSeleccionada(
+            @PathVariable Long id,
+            @RequestParam(required = false) Double radioKm) {
+
+        try {
+            List resultados =
+                    publicacionService.buscarPorPublicacionSeleccionada(id, radioKm);
+
+            if (resultados.isEmpty()) {
+                return Response.response(
+                        HttpStatus.OK,
+                        "La publicación seleccionada es válida, pero no se encontraron coincidencias para la búsqueda",
+                        resultados
+                );
+            }
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Búsqueda realizada exitosamente a partir de la publicación seleccionada",
+                    resultados
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return Response.response(
+                    HttpStatus.BAD_REQUEST,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (IllegalStateException e) {
+
+            return Response.response(
+                    HttpStatus.CONFLICT,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error al validar la publicación seleccionada y realizar la búsqueda",
+                    null
+            );
+        }
+    }
+
+    /**
      * Búsqueda general combinando especie, ubicación
      * y los demás criterios disponibles.
      */
     @GetMapping("/buscar")
-    public ResponseEntity<Response> buscarPublicaciones(
+    public ResponseEntity buscarPublicaciones(
             @RequestParam(required = false) Especie especie,
             @RequestParam(required = false) TipoPublicacion tipoPublicacion,
             @RequestParam(required = false) String fecha,
@@ -82,7 +134,7 @@ public class PublicacionPresenter {
             request.setLongitud(longitud);
             request.setRadioKm(radioKm);
 
-            List<PublicacionResponse> resultados =
+            List resultados =
                     publicacionService.buscar(request);
 
             if (resultados.isEmpty()) {
@@ -118,11 +170,11 @@ public class PublicacionPresenter {
     }
 
     @GetMapping("/especie/{especie}")
-    public ResponseEntity<Response> obtenerPorEspecie(
+    public ResponseEntity obtenerPorEspecie(
             @PathVariable Especie especie) {
 
         try {
-            List<PublicacionResponse> resultados =
+            List resultados =
                     publicacionService.buscarPorEspecie(especie);
 
             if (resultados.isEmpty()) {
@@ -157,23 +209,22 @@ public class PublicacionPresenter {
         }
     }
 
-        /**
+    /**
      * Endpoint de búsqueda por cercanía geográfica.
      */
     @GetMapping("/cercania")
-    public ResponseEntity<Response> obtenerPorCercania(
+    public ResponseEntity obtenerPorCercania(
             @RequestParam Double latitud,
             @RequestParam Double longitud,
             @RequestParam(required = false) Double radioKm) {
 
         try {
-            List<PublicacionResponse> resultados =
+            List resultados =
                     publicacionService.buscarPorCercania(
                             latitud,
                             longitud,
                             radioKm);
 
-            // T - 4.3.7: Manejo de resultados sin coincidencias
             if (resultados.isEmpty()) {
                 return Response.response(
                         HttpStatus.OK,
@@ -207,7 +258,7 @@ public class PublicacionPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Response> consultarPublicacion(
+    public ResponseEntity consultarPublicacion(
             @PathVariable Long id) {
 
         try {
@@ -238,7 +289,7 @@ public class PublicacionPresenter {
         }
     }
 
-    private ResponseEntity<Response> procesarGuardado(
+    private ResponseEntity procesarGuardado(
             PublicacionRequest request,
             Authentication authentication) {
 
