@@ -3,6 +3,7 @@ package app.presenter;
 import app.Response;
 import app.business.PublicacionService;
 import app.model.dto.BusquedaPublicacionRequest;
+import app.model.dto.PublicacionPageResponse;
 import app.model.dto.PublicacionRequest;
 import app.model.dto.PublicacionResponse;
 import app.model.enums.Especie;
@@ -21,7 +22,9 @@ public class PublicacionPresenter {
 
     private final PublicacionService publicacionService;
 
-    public PublicacionPresenter(PublicacionService publicacionService) {
+    public PublicacionPresenter(
+            PublicacionService publicacionService) {
+
         this.publicacionService = publicacionService;
     }
 
@@ -30,7 +33,9 @@ public class PublicacionPresenter {
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
-        return procesarGuardado(request, authentication);
+        return procesarGuardado(
+                request,
+                authentication);
     }
 
     @PostMapping("/perdidas")
@@ -38,9 +43,12 @@ public class PublicacionPresenter {
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
-        request.setTipoPublicacion(TipoPublicacion.PERDIDA);
+        request.setTipoPublicacion(
+                TipoPublicacion.PERDIDA);
 
-        return procesarGuardado(request, authentication);
+        return procesarGuardado(
+                request,
+                authentication);
     }
 
     @PostMapping("/encontradas")
@@ -48,13 +56,18 @@ public class PublicacionPresenter {
             @RequestBody PublicacionRequest request,
             Authentication authentication) {
 
-        request.setTipoPublicacion(TipoPublicacion.ENCONTRADA);
+        request.setTipoPublicacion(
+                TipoPublicacion.ENCONTRADA);
 
-        return procesarGuardado(request, authentication);
+        return procesarGuardado(
+                request,
+                authentication);
     }
 
     /**
-     * T - 5.1.4: Endpoint para validar la publicación seleccionada y ejecutar la búsqueda.
+     * T - 5.1.4:
+     * Endpoint para validar la publicación seleccionada
+     * y ejecutar la búsqueda.
      */
     @GetMapping("/{id}/validar-y-buscar")
     public ResponseEntity buscarPorPublicacionSeleccionada(
@@ -62,10 +75,15 @@ public class PublicacionPresenter {
             @RequestParam(required = false) Double radioKm) {
 
         try {
+
             List resultados =
-                    publicacionService.buscarPorPublicacionSeleccionada(id, radioKm);
+                    publicacionService
+                            .buscarPorPublicacionSeleccionada(
+                                    id,
+                                    radioKm);
 
             if (resultados.isEmpty()) {
+
                 return Response.response(
                         HttpStatus.OK,
                         "La publicación seleccionada es válida, pero no se encontraron coincidencias para la búsqueda",
@@ -106,8 +124,13 @@ public class PublicacionPresenter {
     }
 
     /**
-     * Búsqueda general combinando especie, ubicación
-     * y los demás criterios disponibles.
+     * Búsqueda general de publicaciones con paginación.
+     *
+     * pagina:
+     * número de página comenzando desde 0.
+     *
+     * tamanio:
+     * cantidad máxima de publicaciones por página.
      */
     @GetMapping("/buscar")
     public ResponseEntity buscarPublicaciones(
@@ -118,9 +141,12 @@ public class PublicacionPresenter {
             @RequestParam(required = false) String caracteristicas,
             @RequestParam(required = false) Double latitud,
             @RequestParam(required = false) Double longitud,
-            @RequestParam(required = false) Double radioKm) {
+            @RequestParam(required = false) Double radioKm,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanio) {
 
         try {
+
             BusquedaPublicacionRequest request =
                     new BusquedaPublicacionRequest();
 
@@ -134,10 +160,14 @@ public class PublicacionPresenter {
             request.setLongitud(longitud);
             request.setRadioKm(radioKm);
 
-            List resultados =
-                    publicacionService.buscar(request);
+            PublicacionPageResponse resultados =
+                    publicacionService.buscarPaginado(
+                            request,
+                            pagina,
+                            tamanio);
 
-            if (resultados.isEmpty()) {
+            if (resultados.getContenido().isEmpty()) {
+
                 return Response.response(
                         HttpStatus.OK,
                         "No se encontraron publicaciones que coincidan con los criterios de búsqueda",
@@ -174,20 +204,25 @@ public class PublicacionPresenter {
             @PathVariable Especie especie) {
 
         try {
+
             List resultados =
-                    publicacionService.buscarPorEspecie(especie);
+                    publicacionService
+                            .buscarPorEspecie(especie);
 
             if (resultados.isEmpty()) {
+
                 return Response.response(
                         HttpStatus.OK,
-                        "No se encontraron publicaciones para la especie " + especie,
+                        "No se encontraron publicaciones para la especie "
+                                + especie,
                         resultados
                 );
             }
 
             return Response.response(
                     HttpStatus.OK,
-                    "Publicaciones encontradas exitosamente para la especie " + especie,
+                    "Publicaciones encontradas exitosamente para la especie "
+                            + especie,
                     resultados
             );
 
@@ -219,6 +254,7 @@ public class PublicacionPresenter {
             @RequestParam(required = false) Double radioKm) {
 
         try {
+
             List resultados =
                     publicacionService.buscarPorCercania(
                             latitud,
@@ -226,6 +262,7 @@ public class PublicacionPresenter {
                             radioKm);
 
             if (resultados.isEmpty()) {
+
                 return Response.response(
                         HttpStatus.OK,
                         "No se encontraron publicaciones cercanas en el radio especificado",
@@ -262,6 +299,7 @@ public class PublicacionPresenter {
             @PathVariable Long id) {
 
         try {
+
             PublicacionResponse respuesta =
                     publicacionService.consultar(id);
 
@@ -294,6 +332,7 @@ public class PublicacionPresenter {
             Authentication authentication) {
 
         try {
+
             PublicacionResponse respuesta =
                     publicacionService.guardar(
                             request,

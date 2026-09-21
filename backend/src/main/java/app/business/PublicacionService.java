@@ -3,6 +3,7 @@ package app.business;
 import app.model.Publicacion;
 import app.model.Usuario;
 import app.model.dto.BusquedaPublicacionRequest;
+import app.model.dto.PublicacionPageResponse;
 import app.model.dto.PublicacionRequest;
 import app.model.dto.PublicacionResponse;
 import app.model.enums.Especie;
@@ -86,7 +87,7 @@ public class PublicacionService {
     }
 
     /**
-     * Valida que la publicación seleccionada exista y cuente con 
+     * Valida que la publicación seleccionada exista y cuente con
      * los datos necesarios para realizar búsquedas.
      */
     @Transactional(readOnly = true)
@@ -113,15 +114,21 @@ public class PublicacionService {
      * Realiza la búsqueda de coincidencias utilizando una publicación seleccionada como referencia.
      */
     @Transactional(readOnly = true)
-    public List buscarPorPublicacionSeleccionada(Long publicacionId, Double radioKm) {
+    public List buscarPorPublicacionSeleccionada(
+            Long publicacionId,
+            Double radioKm) {
 
-        Publicacion publicacionBase = validarPublicacionSeleccionada(publicacionId);
+        Publicacion publicacionBase =
+                validarPublicacionSeleccionada(publicacionId);
 
-        TipoPublicacion tipoBuscado = (publicacionBase.getTipoPublicacion() == TipoPublicacion.PERDIDA)
-                ? TipoPublicacion.ENCONTRADA
-                : TipoPublicacion.PERDIDA;
+        TipoPublicacion tipoBuscado =
+                (publicacionBase.getTipoPublicacion() == TipoPublicacion.PERDIDA)
+                        ? TipoPublicacion.ENCONTRADA
+                        : TipoPublicacion.PERDIDA;
 
-        BusquedaPublicacionRequest request = new BusquedaPublicacionRequest();
+        BusquedaPublicacionRequest request =
+                new BusquedaPublicacionRequest();
+
         request.setEspecie(publicacionBase.getEspecie());
         request.setTipoPublicacion(tipoBuscado);
         request.setLatitud(publicacionBase.getLatitud());
@@ -144,7 +151,6 @@ public class PublicacionService {
                     "Los criterios de búsqueda son obligatorios");
         }
 
-        // Si se proporciona una ubicación, se validan las coordenadas.
         boolean aplicarFiltroGeografico =
                 request.getLatitud() != null
                         && request.getLongitud() != null;
@@ -153,25 +159,29 @@ public class PublicacionService {
 
             if (request.getLatitud() < -90.0
                     || request.getLatitud() > 90.0) {
+
                 throw new IllegalArgumentException(
                         "La latitud debe estar entre -90 y 90");
             }
 
             if (request.getLongitud() < -180.0
                     || request.getLongitud() > 180.0) {
+
                 throw new IllegalArgumentException(
                         "La longitud debe estar entre -180 y 180");
             }
 
             if (request.getRadioKm() != null
                     && request.getRadioKm() <= 0) {
+
                 throw new IllegalArgumentException(
                         "El radio debe ser mayor a 0");
             }
         }
 
         double radioEfectivo =
-                (request.getRadioKm() != null && request.getRadioKm() > 0)
+                (request.getRadioKm() != null
+                        && request.getRadioKm() > 0)
                         ? request.getRadioKm()
                         : radioMvpKm;
 
@@ -198,17 +208,19 @@ public class PublicacionService {
                 .filter(p -> request.getRaza() == null
                         || request.getRaza().isBlank()
                         || (p.getRaza() != null
-                        && p.getRaza().toLowerCase()
+                        && p.getRaza()
+                        .toLowerCase()
                         .contains(request.getRaza().toLowerCase())))
 
                 // Filtro por características
                 .filter(p -> request.getCaracteristicas() == null
                         || request.getCaracteristicas().isBlank()
                         || (p.getCaracteristicas() != null
-                        && p.getCaracteristicas().toLowerCase()
+                        && p.getCaracteristicas()
+                        .toLowerCase()
                         .contains(request.getCaracteristicas().toLowerCase())))
 
-                // Filtro geográfico combinado con los demás criterios
+                // Filtro geográfico
                 .filter(p -> !aplicarFiltroGeografico
                         || (p.getLatitud() != null
                         && p.getLongitud() != null
@@ -218,10 +230,12 @@ public class PublicacionService {
                         p.getLatitud(),
                         p.getLongitud()) <= radioEfectivo))
 
+                // Ordenar de más reciente a más antigua
                 .sorted((p1, p2) -> {
 
                     if (p1.getFechaCreacion() == null
                             || p2.getFechaCreacion() == null) {
+
                         return 0;
                     }
 
@@ -231,6 +245,70 @@ public class PublicacionService {
 
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * T - 4.1.5
+     *
+     * Realiza la búsqueda de publicaciones aplicando paginación
+     * sobre los resultados obtenidos luego de aplicar los filtros.
+     *
+     * La página comienza en 0.
+     */
+    @Transactional(readOnly = true)
+    public PublicacionPageResponse buscarPaginado(
+            BusquedaPublicacionRequest request,
+            int pagina,
+            int tamanio) {
+
+        if (pagina < 0) {
+            throw new IllegalArgumentException(
+                    "El número de página no puede ser negativo");
+        }
+
+        if (tamanio <= 0) {
+            throw new IllegalArgumentException(
+                    "El tamaño de página debe ser mayor a 0");
+        }
+
+        List<PublicacionResponse> resultados =
+                buscar(request);
+
+        long totalElementos = resultados.size();
+
+        int totalPaginas =
+                (int) Math.ceil(
+                        (double) totalElementos / tamanio);
+
+        int inicio = pagina * tamanio;
+
+        // La página solicitada no existe.
+        if (inicio >= totalElementos) {
+
+            return new PublicacionPageResponse(
+                    List.of(),
+                    pagina,
+                    tamanio,
+                    totalElementos,
+                    totalPaginas
+            );
+        }
+
+        int fin =
+                Math.min(
+                        inicio + tamanio,
+                        (int) totalElementos);
+
+        List<PublicacionResponse> contenido =
+                resultados.subList(inicio, fin);
+
+        return new PublicacionPageResponse(
+                contenido,
+                pagina,
+                tamanio,
+                totalElementos,
+                totalPaginas
+        );
     }
 
     /**
@@ -251,6 +329,7 @@ public class PublicacionService {
 
                     if (p1.getFechaCreacion() == null
                             || p2.getFechaCreacion() == null) {
+
                         return 0;
                     }
 
@@ -270,12 +349,18 @@ public class PublicacionService {
             Double longitud,
             Double radioKm) {
 
-        if (latitud == null || latitud < -90.0 || latitud > 90.0) {
+        if (latitud == null
+                || latitud < -90.0
+                || latitud > 90.0) {
+
             throw new IllegalArgumentException(
                     "La latitud debe estar entre -90 y 90");
         }
 
-        if (longitud == null || longitud < -180.0 || longitud > 180.0) {
+        if (longitud == null
+                || longitud < -180.0
+                || longitud > 180.0) {
+
             throw new IllegalArgumentException(
                     "La longitud debe estar entre -180 y 180");
         }
@@ -286,15 +371,25 @@ public class PublicacionService {
                         : radioMvpKm;
 
         // Bounding Box para reducir los candidatos
-        double deltaLat = radioEfectivo / 111.12;
+        double deltaLat =
+                radioEfectivo / 111.12;
 
-        double deltaLon = radioEfectivo
-                / (111.12 * Math.cos(Math.toRadians(latitud)));
+        double deltaLon =
+                radioEfectivo
+                        / (111.12
+                        * Math.cos(Math.toRadians(latitud)));
 
-        double latMin = latitud - deltaLat;
-        double latMax = latitud + deltaLat;
-        double lonMin = longitud - deltaLon;
-        double lonMax = longitud + deltaLon;
+        double latMin =
+                latitud - deltaLat;
+
+        double latMax =
+                latitud + deltaLat;
+
+        double lonMin =
+                longitud - deltaLon;
+
+        double lonMax =
+                longitud + deltaLon;
 
         List candidatos =
                 publicacionRepository
@@ -305,6 +400,7 @@ public class PublicacionService {
                                 lonMax);
 
         return candidatos.stream()
+
                 .filter(p -> p.getLatitud() != null
                         && p.getLongitud() != null)
 
@@ -316,17 +412,19 @@ public class PublicacionService {
 
                 .sorted((p1, p2) -> {
 
-                    double d1 = calcularDistanciaKm(
-                            latitud,
-                            longitud,
-                            p1.getLatitud(),
-                            p1.getLongitud());
+                    double d1 =
+                            calcularDistanciaKm(
+                                    latitud,
+                                    longitud,
+                                    p1.getLatitud(),
+                                    p1.getLongitud());
 
-                    double d2 = calcularDistanciaKm(
-                            latitud,
-                            longitud,
-                            p2.getLatitud(),
-                            p2.getLongitud());
+                    double d2 =
+                            calcularDistanciaKm(
+                                    latitud,
+                                    longitud,
+                                    p2.getLatitud(),
+                                    p2.getLongitud());
 
                     return Double.compare(d1, d2);
                 })
@@ -369,19 +467,24 @@ public class PublicacionService {
      * Redondeo a 2 decimales para no exponer
      * la ubicación exacta del usuario.
      */
-    private Double aproximarCoordenada(Double coordenada) {
+    private Double aproximarCoordenada(
+            Double coordenada) {
 
         if (coordenada == null) {
             return null;
         }
 
-        return Math.round(coordenada * 100.0) / 100.0;
+        return Math.round(
+                coordenada * 100.0) / 100.0;
     }
 
     /**
-     * Método auxiliar para unificar el mapeo a PublicacionResponse
+     * Método auxiliar para unificar el mapeo
+     * a PublicacionResponse.
      */
-    private PublicacionResponse mapToResponse(Publicacion p) {
+    private PublicacionResponse mapToResponse(
+            Publicacion p) {
+
         return new PublicacionResponse(
                 p.getId(),
                 p.getTipoPublicacion(),
