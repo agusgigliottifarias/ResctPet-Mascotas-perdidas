@@ -26,26 +26,39 @@ export const crearPublicacion = async (publicacionRequest) => {
 
 /**
  * Consulta una publicación por ID
+ * Desenvuelve automáticamente el response de Spring Boot { status, message, data }
  */
 export const getPublicacionPorId = async (id) => {
   const response = await axiosClient.get(`/api/publicaciones/${id}`);
-  return response.data;
+  // Si el backend viene envuelto en Response(status, message, data), extraemos data
+  return response.data?.data ? response.data.data : response.data;
 };
 
 /**
- * Busca publicaciones por criterios (Tarjeta 4.1.7)
+ * Busca publicaciones por criterios (Filtros generales)
  * @param {Object} params - { especie, tipoPublicacion, fecha, raza, caracteristicas }
  */
 export const buscarPublicaciones = async (params = {}) => {
   const response = await axiosClient.get('/api/publicaciones/buscar', { params });
-  return response.data;
+  return response.data?.data ? response.data.data : response.data;
 };
 
 /**
- * Obtiene publicaciones filtradas por especie (Tarjeta 4.2.7)
+ * Obtiene publicaciones filtradas por especie
  * @param {string} especie - PERRO, GATO, etc.
  */
 export const getPublicacionesPorEspecie = async (especie) => {
   const response = await axiosClient.get(`/api/publicaciones/especie/${especie}`);
-  return response.data;
+  return response.data?.data ? response.data.data : response.data;
+};
+
+/**
+ * Obtiene publicaciones por cercanía geográfica (para el mapa)
+ * @param {Object} coords - { latitud, longitud, radioKm }
+ */
+export const getPublicacionesPorCercania = async ({ latitud, longitud, radioKm = 5 }) => {
+  const response = await axiosClient.get('/api/publicaciones/cercania', {
+    params: { latitud, longitud, radioKm }
+  });
+  return response.data?.data ? response.data.data : response.data;
 };
