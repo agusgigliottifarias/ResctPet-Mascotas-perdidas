@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AuthSlider from "./components/auth/AuthSlider";
 import ModalPublicacion from "./components/publicaciones/ModalPublicacion";
 
 export default function App() {
@@ -27,9 +26,6 @@ export default function App() {
       >
         <span>🐾</span> Publicar Mascota
       </button>
-
-      {/* Pantalla base de login/registro */}
-      <AuthSlider />
 
       {/* Modal de Crear Publicación */}
       <ModalPublicacion

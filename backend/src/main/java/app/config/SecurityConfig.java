@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/usuarios/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/publicaciones/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/publicaciones/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/publicaciones/**").permitAll()
                         .anyRequest().permitAll()
                 )
                 .httpBasic(httpBasic -> {});

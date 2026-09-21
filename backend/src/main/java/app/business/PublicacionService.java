@@ -38,51 +38,47 @@ public class PublicacionService {
         return radioMvpKm;
     }
 
-    @Transactional
-    public PublicacionResponse guardar(
-            PublicacionRequest request,
-            Authentication authentication) {
+   @Transactional
+public PublicacionResponse guardar(
+        PublicacionRequest request,
+        Authentication authentication) {
 
-        PublicacionValidator.validar(request);
+    PublicacionValidator.validar(request);
 
-        Publicacion publicacion = new Publicacion();
+    Publicacion publicacion = new Publicacion();
 
-        publicacion.setTipoPublicacion(request.getTipoPublicacion());
-        publicacion.setEspecie(request.getEspecie());
-        publicacion.setRaza(request.getRaza());
-        publicacion.setEdad(request.getEdad());
-        publicacion.setFecha(request.getFecha());
-        publicacion.setCaracteristicas(request.getCaracteristicas());
-        publicacion.setFotografia(request.getFotografia());
-        publicacion.setLatitud(request.getLatitud());
-        publicacion.setLongitud(request.getLongitud());
+    publicacion.setTipoPublicacion(request.getTipoPublicacion());
+    publicacion.setEspecie(request.getEspecie());
+    publicacion.setRaza(request.getRaza());
+    publicacion.setEdad(request.getEdad());
+    publicacion.setFecha(request.getFecha());
+    publicacion.setCaracteristicas(request.getCaracteristicas());
+    publicacion.setFotografia(request.getFotografia());
+    publicacion.setLatitud(request.getLatitud());
+    publicacion.setLongitud(request.getLongitud());
 
-        String email = authentication.getName();
+    Usuario usuario = usuarioRepository
+            .findById(request.getUsuarioId())
+            .orElseThrow(() -> new IllegalArgumentException(
+                    "El usuario indicado no existe"));
 
-        Usuario usuario = usuarioRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "El usuario autenticado no existe"));
+    publicacion.setUsuario(usuario);
 
-        publicacion.setUsuario(usuario);
+    Publicacion guardada = publicacionRepository.save(publicacion);
 
-        Publicacion guardada = publicacionRepository.save(publicacion);
-
-        // Retornamos las coordenadas redondeadas a 2 decimales
-        // para proteger la privacidad
-        return new PublicacionResponse(
-                guardada.getId(),
-                guardada.getTipoPublicacion(),
-                guardada.getEspecie(),
-                guardada.getRaza(),
-                guardada.getEdad(),
-                guardada.getFecha(),
-                guardada.getCaracteristicas(),
-                guardada.getFotografia(),
-                aproximarCoordenada(guardada.getLatitud()),
-                aproximarCoordenada(guardada.getLongitud()),
-                guardada.getFechaCreacion());
-    }
+    return new PublicacionResponse(
+            guardada.getId(),
+            guardada.getTipoPublicacion(),
+            guardada.getEspecie(),
+            guardada.getRaza(),
+            guardada.getEdad(),
+            guardada.getFecha(),
+            guardada.getCaracteristicas(),
+            guardada.getFotografia(),
+            aproximarCoordenada(guardada.getLatitud()),
+            aproximarCoordenada(guardada.getLongitud()),
+            guardada.getFechaCreacion());
+}
 
     @Transactional(readOnly = true)
     public PublicacionResponse consultar(Long id) {
