@@ -18,9 +18,30 @@ const INITIAL_STATE = {
   tamano: TAMANO.MEDIANO,
   estadoRetencion: '',
   ubicacion: '',
+  latitud: null,
+  longitud: null,
   caracteristicas: '',
   nombreFoto: 'mascota.jpg',
   fotoBase64: null
+};
+
+// Geocodificación directa: busca lat/lng a partir del texto ingresado si no abrió el mapa
+const buscarCoordenadasPorTexto = async (textoUbicacion) => {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(textoUbicacion)}&limit=1`
+    );
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return {
+        latitud: parseFloat(data[0].lat),
+        longitud: parseFloat(data[0].lon)
+      };
+    }
+  } catch (err) {
+    console.error('Error al geocodificar dirección:', err);
+  }
+  return null;
 };
 
 export const usePublicacionForm = ({ onSuccess, onClose }) => {
@@ -31,7 +52,6 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
 
   const handleChange = useCallback((field, value) => {
     setFormData((prev) => {
-      // Si cambia especie, resetea la raza a 'MESTIZO'
       if (field === 'especie') {
         return { ...prev, especie: value, raza: 'MESTIZO' };
       }
@@ -99,10 +119,26 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
     try {
       setLoading(true);
 
+      let latitudFinal = formData.latitud;
+      let longitudFinal = formData.longitud;
+
+      if ((!latitudFinal || !longitudFinal) && formData.ubicacion.trim()) {
+        const coords = await buscarCoordenadasPorTexto(formData.ubicacion.trim());
+        if (coords) {
+          latitudFinal = coords.latitud;
+          longitudFinal = coords.longitud;
+        }
+      }
+
+      if (!latitudFinal || !longitudFinal) {
+        setError('Por favor, selecciona una ubicación en el mapa (botón 📍 Mapa) o ingresa una calle válida.');
+        setLoading(false);
+        return;
+      }
+
       const storedUser = localStorage.getItem('user');
       const userId = storedUser ? JSON.parse(storedUser).id : 1;
 
-      // Armado de texto de características (máx 500 caracteres)
       let textoCaracteristicas = formData.caracteristicas.trim();
       if (formData.nombre.trim()) {
         textoCaracteristicas = `Nombre: ${formData.nombre.trim()}. ${textoCaracteristicas}`;
@@ -117,12 +153,7 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
         textoCaracteristicas = textoCaracteristicas.substring(0, 500);
       }
 
-      // Fecha automática en formato YYYY-MM-DD
       const fechaAutomatica = new Date().toISOString().slice(0, 10);
-
-      // Coordenadas hardcodeadas de referencia
-      const latitudHardcodeada = -42.7692;
-      const longitudHardcodeada = -65.0385;
 
       const payload = {
         tipoPublicacion: formData.tipo,
@@ -131,13 +162,12 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
         edad: formData.edad || 'DESCONOCIDA',
         fecha: fechaAutomatica,
         caracteristicas: textoCaracteristicas || 'Mascota reportada',
-        fotografia: formData.nombreFoto || 'mascota.jpg',
-        latitud: latitudHardcodeada,
-        longitud: longitudHardcodeada,
+        fotografia: formData.fotoBase64 || formData.nombreFoto || 'mascota.jpg',
+        latitud: latitudFinal,
+        longitud: longitudFinal,
         usuarioId: userId
       };
 
-      // Despacho al endpoint específico según el formulario activo
       if (formData.tipo === TIPO_PUBLICACION.ENCONTRADA) {
         await crearPublicacionEncontrada(payload);
       } else {

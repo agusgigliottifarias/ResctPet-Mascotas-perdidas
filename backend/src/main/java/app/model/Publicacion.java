@@ -34,7 +34,8 @@ public class Publicacion {
     @Column(nullable = false, length = 500)
     private String caracteristicas;
 
-    @Column(nullable = false)
+        // Cambia la línea 37 para permitir guardar fotos completas sin límite de 255 caracteres:
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String fotografia;
 
     @Column(nullable = false)

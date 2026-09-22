@@ -459,15 +459,11 @@ public class PublicacionService {
     /**
      * Redondeo a 2 decimales para proteger la ubicación exacta del usuario.
      */
-    private Double aproximarCoordenada(
+        private Double aproximarCoordenada(
             Double coordenada) {
 
-        if (coordenada == null) {
-            return null;
-        }
-
-        return Math.round(
-                coordenada * 100.0) / 100.0;
+        // Retorna la coordenada real exacta sin recortar decimales
+        return coordenada;
     }
 
     /**

@@ -18,13 +18,11 @@ export default function BusquedaPublicaciones({
     setEspecie,
     raza,
     setRaza,
-    // Cercanía geográfica
     cercaniaActiva,
     radioKm,
     toggleCercania,
     cargandoUbicacion,
     errorUbicacion,
-    // Resultados y estados
     publicaciones,
     totalResultados,
     cargando,
@@ -37,7 +35,6 @@ export default function BusquedaPublicaciones({
 
   if (!isOpen) return null;
 
-  // Opciones dinámicas de raza según la especie activa
   const opcionesRazas =
     especie === ESPECIE.PERRO
       ? RAZAS_PERRO
@@ -45,7 +42,6 @@ export default function BusquedaPublicaciones({
       ? RAZAS_GATO
       : [];
 
-  // Guarda estricta frontend (Criterio 6: no mezclar especies)
   const publicacionesFiltradas = publicaciones.filter((pub) => {
     if (!especie) return true;
     return pub.especie === especie;
@@ -53,7 +49,6 @@ export default function BusquedaPublicaciones({
 
   return (
     <aside className="w-full sm:w-[480px] h-full bg-[#F7F4EE] border-r border-[#E2ECE4] shadow-2xl flex flex-col z-30 transition-all duration-300">
-      {/* 1. Header */}
       <div className="p-4 bg-white border-b border-[#E2ECE4] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xl">🔍</span>
@@ -73,9 +68,7 @@ export default function BusquedaPublicaciones({
         )}
       </div>
 
-      {/* 2. Filtros y Búsqueda */}
       <div className="p-4 bg-white/70 backdrop-blur-sm border-b border-[#E2ECE4] space-y-3">
-        {/* Barra de Búsqueda por texto */}
         <div className="flex gap-2">
           <input
             type="text"
@@ -94,7 +87,6 @@ export default function BusquedaPublicaciones({
           </button>
         </div>
 
-        {/* Filtro de Cercanía Geográfica (Radio 5 km) */}
         <FiltroCercania
           activo={cercaniaActiva}
           cargando={cargandoUbicacion}
@@ -103,7 +95,6 @@ export default function BusquedaPublicaciones({
           error={errorUbicacion}
         />
 
-        {/* Componente Atómico: Filtro de Especie */}
         <div>
           <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
             Especie
@@ -112,13 +103,12 @@ export default function BusquedaPublicaciones({
             especieSeleccionada={especie}
             onCambiarEspecie={(nuevaEspecie) => {
               setEspecie(nuevaEspecie);
-              setRaza(''); // Reset de raza
+              setRaza('');
             }}
             disabled={cargando}
           />
         </div>
 
-        {/* Chips de Estado (Perdido / Encontrado) */}
         <div>
           <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
             Estado de publicación
@@ -163,7 +153,6 @@ export default function BusquedaPublicaciones({
           </div>
         </div>
 
-        {/* Selector condicional de Razas */}
         {opcionesRazas.length > 0 && (
           <div>
             <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
@@ -185,7 +174,6 @@ export default function BusquedaPublicaciones({
         )}
       </div>
 
-      {/* 3. Lista de Resultados */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {cargando ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400">
@@ -198,7 +186,6 @@ export default function BusquedaPublicaciones({
             <p className="text-xs font-semibold text-red-500">{error}</p>
           </div>
         ) : publicacionesFiltradas.length === 0 ? (
-          /* Criterios 5 y 7: Mensajes contextuales claros */
           <div className="text-center py-16 text-gray-400">
             <span className="text-4xl block mb-2">
               {cercaniaActiva ? '📍' : especie === ESPECIE.GATO ? '🐱' : especie === ESPECIE.PERRO ? '🐶' : '🐾'}
@@ -230,13 +217,12 @@ export default function BusquedaPublicaciones({
                 onClick={() => onSelectPublicacion && onSelectPublicacion(pub.id)}
                 className="p-3 bg-white rounded-2xl border border-[#E2ECE4] shadow-xs hover:shadow-md hover:border-[#FF7A59]/40 transition-all cursor-pointer flex gap-3 items-center group"
               >
-                {/* Miniatura Foto o Huella */}
                 <div
                   className={`w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden shrink-0 border border-black/5 ${
                     esPerdido ? 'bg-[#FFF2ED]' : 'bg-[#EBF9F8]'
                   }`}
                 >
-                  {foto ? (
+                  {foto && (foto.startsWith('data:') || foto.startsWith('http') || foto.length > 100) ? (
                     <img
                       src={
                         foto.startsWith('data:') || foto.startsWith('http')
@@ -253,7 +239,6 @@ export default function BusquedaPublicaciones({
                   )}
                 </div>
 
-                {/* Info Mascota */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span
@@ -282,7 +267,6 @@ export default function BusquedaPublicaciones({
         )}
       </div>
 
-      {/* 4. Paginación */}
       {totalResultados > 4 && (
         <div className="p-3 bg-white border-t border-[#E2ECE4] flex items-center justify-between text-xs text-gray-600">
           <span className="font-medium">

@@ -12,7 +12,6 @@ export default function DetallePublicacion({
   const [cargando, setCargando] = useState(Boolean(publicacionId && !publicacionProp));
   const [error, setError] = useState(null);
 
-  // 1. Integración con el Backend: consulta GET /api/publicaciones/{id}
   useEffect(() => {
     if (!publicacionId) {
       if (publicacionProp) setData(publicacionProp);
@@ -45,7 +44,6 @@ export default function DetallePublicacion({
     };
   }, [publicacionId, publicacionProp]);
 
-  // Si está cargando datos del backend
   if (cargando) {
     return (
       <aside className="w-full sm:w-[450px] h-full bg-white/95 backdrop-blur-xl border border-white/80 shadow-[0_20px_50px_-15px_rgba(45,55,72,0.2)] rounded-[32px] p-6 flex flex-col items-center justify-center z-40">
@@ -55,7 +53,6 @@ export default function DetallePublicacion({
     );
   }
 
-  // Si ocurrió un error en el backend
   if (error || !data) {
     return (
       <aside className="w-full sm:w-[450px] h-full bg-white/95 backdrop-blur-xl border border-white/80 shadow-[0_20px_50px_-15px_rgba(45,55,72,0.2)] rounded-[32px] p-6 flex flex-col items-center justify-center text-center z-40">
@@ -74,19 +71,15 @@ export default function DetallePublicacion({
     );
   }
 
-  // Mapeo seguro con los nombres de campos que devuelve Spring Boot
   const tipo = (data.tipoPublicacion || data.tipo || 'PERDIDA').toUpperCase();
   const esPerdido = tipo.includes('PERDID');
   const foto = data.fotografia || data.imagenUrl || null;
   const descripcion = data.caracteristicas || data.descripcion || 'Sin descripción adicional.';
-
-  // Formato amigable de fecha
   const fechaTexto = data.fecha || (data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : 'Reciente');
 
   return (
     <aside className="w-full sm:w-[450px] h-full bg-white/95 backdrop-blur-xl border border-white/80 shadow-[0_20px_50px_-15px_rgba(45,55,72,0.2)] rounded-[32px] p-6 flex flex-col justify-between overflow-y-auto z-40 transition-all duration-300">
       <div>
-        {/* Header: Badge de Estado y Botón Cerrar */}
         <div className="flex items-center justify-between mb-4">
           <span
             className={`px-3.5 py-1.5 rounded-full text-[11px] font-black tracking-wider uppercase border shadow-xs ${
@@ -109,13 +102,13 @@ export default function DetallePublicacion({
           )}
         </div>
 
-        {/* Foto de la Mascota (o Huella fallback) */}
+        {/* Foto de la Mascota o Huella */}
         <div
           className={`relative w-full h-52 rounded-2xl flex items-center justify-center overflow-hidden border border-black/5 shadow-inner mb-4 transition-colors ${
             esPerdido ? 'bg-[#FFF2ED]' : 'bg-[#EBF9F8]'
           }`}
         >
-          {foto ? (
+          {foto && (foto.startsWith('data:') || foto.startsWith('http') || foto.length > 100) ? (
             <img
               src={foto.startsWith('data:') || foto.startsWith('http') ? foto : `data:image/jpeg;base64,${foto}`}
               alt={data.nombre || 'Mascota'}
@@ -123,13 +116,10 @@ export default function DetallePublicacion({
             />
           ) : (
             <div className="flex flex-col items-center justify-center">
-              <span className="text-7xl select-none filter drop-shadow-sm opacity-80 transition-transform duration-300 hover:scale-110">
-                🐾
-              </span>
+              <span className="text-7xl select-none opacity-80">🐾</span>
             </div>
           )}
 
-          {/* Pill de Fecha */}
           <div className="absolute bottom-3 left-3.5 flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-[#2D3748] shadow-sm border border-black/5">
             <span
               className={`w-2 h-2 rounded-full animate-pulse ${
@@ -140,7 +130,6 @@ export default function DetallePublicacion({
           </div>
         </div>
 
-        {/* Título y Especie / Raza */}
         <div className="mb-4">
           <h2 className="text-2xl font-black text-[#2D3748] tracking-tight leading-none mb-1">
             {data.nombre || (esPerdido ? 'Mascota perdida' : 'Mascota encontrada')}
@@ -150,7 +139,6 @@ export default function DetallePublicacion({
           </p>
         </div>
 
-        {/* Grid de Atributos (Especie, Edad, ID) */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="rounded-xl bg-[#F7F4EE]/90 p-2.5 border border-black/5 text-center">
             <span className="block text-[9px] font-black tracking-wider text-[#A0AEC0] uppercase mb-0.5">
@@ -180,10 +168,10 @@ export default function DetallePublicacion({
           </div>
         </div>
 
-        {/* Tarjeta de Ubicación / Coordenadas */}
+        {/* Tarjeta de Ubicación */}
         <div className="mb-4">
           <span className="block text-[10px] font-black tracking-wider text-[#718096] uppercase mb-1.5">
-            UBICACIÓN / COORDENADAS
+            UBICACIÓN
           </span>
           <div className="rounded-xl bg-[#F7F4EE]/90 p-3 border border-black/5 flex items-start gap-3 shadow-xs">
             <div
@@ -200,18 +188,14 @@ export default function DetallePublicacion({
             </div>
             <div>
               <h3 className="text-xs font-bold text-[#2D3748] leading-tight">
-                {data.ubicacion || (data.latitud && data.longitud ? `Lat: ${data.latitud.toFixed(4)}, Lng: ${data.longitud.toFixed(4)}` : 'Ubicación registrada en mapa')}
+                {data.caracteristicas?.match(/\[Zona:\s*([^\]]+)\]/)?.[1] ||
+                 data.ubicacion ||
+                 'Ubicación registrada en mapa'}
               </h3>
-              {data.latitud && data.longitud && (
-                <p className="text-[10px] font-medium text-[#718096] mt-0.5">
-                  Coordenadas: {data.latitud}, {data.longitud}
-                </p>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Sección Características / Descripción */}
         <div className="mb-4">
           <span className="block text-xs font-bold text-[#2D3748] mb-1">
             Características y señas
@@ -222,7 +206,6 @@ export default function DetallePublicacion({
         </div>
       </div>
 
-      {/* Botones de Acción */}
       <div className="space-y-2 pt-2">
         <button
           onClick={() => onNotificarAvistamiento && onNotificarAvistamiento(data)}
