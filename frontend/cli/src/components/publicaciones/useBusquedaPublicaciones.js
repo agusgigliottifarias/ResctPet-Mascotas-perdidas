@@ -42,10 +42,9 @@ export const useBusquedaPublicaciones = () => {
         params.radioKm = radioKm;
       }
 
-            const res = await buscarPublicaciones(params);
+      const res = await buscarPublicaciones(params);
       // Extrae la lista desde res.contenido (paginado de Spring Boot) o res.data
       const lista = Array.isArray(res) ? res : (res?.contenido || res?.data || []);
-      setPublicaciones(lista);
       setPublicaciones(lista);
       setPaginaActual(1);
     } catch (err) {
@@ -118,6 +117,7 @@ export const useBusquedaPublicaciones = () => {
     setRaza,
     // Filtro de cercanía geográfica
     cercaniaActiva,
+    coordsUsuario,
     radioKm,
     toggleCercania,
     cargandoUbicacion,

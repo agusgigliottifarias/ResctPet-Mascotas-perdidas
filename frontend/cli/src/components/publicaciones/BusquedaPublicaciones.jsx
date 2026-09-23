@@ -4,6 +4,22 @@ import FiltroEspecie from './FiltroEspecie';
 import FiltroCercania from './FiltroCercania';
 import { TIPO_PUBLICACION, ESPECIE, RAZAS_PERRO, RAZAS_GATO } from '../../constants/mascotas';
 
+// Cálculo Haversine de distancia entre dos coordenadas en km
+const calcularDistanciaKm = (lat1, lon1, lat2, lon2) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 export default function BusquedaPublicaciones({
   isOpen = true,
   onClose,
@@ -19,6 +35,7 @@ export default function BusquedaPublicaciones({
     raza,
     setRaza,
     cercaniaActiva,
+    coordsUsuario,
     radioKm,
     toggleCercania,
     cargandoUbicacion,
@@ -211,6 +228,16 @@ export default function BusquedaPublicaciones({
                 ? new Date(pub.fechaCreacion).toLocaleDateString()
                 : 'Reciente');
 
+            const distKm =
+              cercaniaActiva && coordsUsuario && pub.latitud && pub.longitud
+                ? calcularDistanciaKm(
+                    coordsUsuario.latitud,
+                    coordsUsuario.longitud,
+                    pub.latitud,
+                    pub.longitud
+                  )
+                : null;
+
             return (
               <div
                 key={pub.id}
@@ -240,7 +267,7 @@ export default function BusquedaPublicaciones({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     <span
                       className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
                         esPerdido
@@ -250,6 +277,13 @@ export default function BusquedaPublicaciones({
                     >
                       {esPerdido ? 'PERDIDO' : 'ENCONTRADO'}
                     </span>
+
+                    {distKm !== null && (
+                      <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#2EC4B6]/15 text-[#2EC4B6] border border-[#2EC4B6]/30">
+                        📍 {distKm < 1 ? `A ${Math.round(distKm * 1000)} m` : `A ${distKm.toFixed(1)} km`}
+                      </span>
+                    )}
+
                     <span className="text-[10px] text-gray-400 truncate">{fechaStr}</span>
                   </div>
 
