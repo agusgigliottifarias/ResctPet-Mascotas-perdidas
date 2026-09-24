@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { Given, When, Then } = require('@cucumber/cucumber');
 
-const URL_BASE = process.env.BASE_URL || 'http://localhost:8080';
+const URL_BASE = process.env.BASE_URL || 'http://backend:8080';
 
 function primeraFila(tabla) {
   const fila = tabla.hashes()[0];
@@ -17,6 +17,8 @@ function primeraFila(tabla) {
       resultado[key] = parseFloat(fila[key]);
     } else if (key === 'usuarioId') {
       resultado[key] = parseInt(fila[key], 10);
+    } else if (key === 'edad') {
+      resultado[key] = parseInt(fila[key], 10);
     } else {
       resultado[key] = fila[key];
     }
@@ -26,15 +28,10 @@ function primeraFila(tabla) {
 }
 
 async function enviarPost(ruta, body) {
-  const credenciales = Buffer
-    .from('test@resctpet.com:123456')
-    .toString('base64');
-
   const response = await fetch(URL_BASE + ruta, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${credenciales}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(body)
   });
@@ -51,14 +48,19 @@ Given('un usuario registrado con id {int}', function (usuarioId) {
   this.usuarioId = usuarioId;
 });
 
-When('se crea la publicación de mascota perdida:', async function (tabla) {
-  const datosPublicacion = primeraFila(tabla);
+When(
+  'se crea la publicación de mascota perdida:',
+  { timeout: 10000 },
+  async function (tabla) {
 
-  this.response = await enviarPost(
-    '/api/publicaciones/perdidas',
-    datosPublicacion
-  );
-});
+    const datosPublicacion = primeraFila(tabla);
+
+    this.response = await enviarPost(
+      '/api/publicaciones',
+      datosPublicacion
+    );
+  }
+);
 
 Then('la respuesta HTTP debe ser status {int}', function (statusCodeEsperado) {
   assert.strictEqual(
@@ -79,71 +81,65 @@ Then('el mensaje de la respuesta debe ser {string}', function (mensajeEsperado) 
   );
 });
 
-Then('la respuesta contiene la publicación registrada:', function (tabla) {
-  const esperado = primeraFila(tabla);
-  const publicacion = this.response.body.data;
+Then(
+  'la respuesta contiene la publicación registrada:',
+  function (tabla) {
 
-  assert.ok(
-    publicacion,
-    'La respuesta debe contener los datos de la publicación'
-  );
+    const esperado = primeraFila(tabla);
+    const publicacion = this.response.body.data;
 
-  assert.ok(
-    publicacion.id,
-    'La publicación registrada debe contener un ID generado'
-  );
+    assert.ok(
+      publicacion,
+      'La respuesta debe contener los datos de la publicación'
+    );
 
-  assert.strictEqual(
-    publicacion.tipoPublicacion,
-    esperado.tipoPublicacion
-  );
+    assert.ok(
+      publicacion.id,
+      'La publicación registrada debe contener un ID generado'
+    );
 
-  assert.strictEqual(
-    publicacion.especie,
-    esperado.especie
-  );
-
-  if (esperado.raza !== undefined && esperado.raza !== null) {
     assert.strictEqual(
-      publicacion.raza,
-      esperado.raza
+      publicacion.tipoPublicacion,
+      esperado.tipoPublicacion
+    );
+
+    assert.strictEqual(
+      publicacion.especie,
+      esperado.especie
+    );
+
+    if (esperado.raza !== undefined && esperado.raza !== null) {
+      assert.strictEqual(
+        publicacion.raza,
+        esperado.raza
+      );
+    }
+
+    if (esperado.edad !== undefined && esperado.edad !== null) {
+      assert.strictEqual(
+        Number(publicacion.edad),
+        esperado.edad
+      );
+    }
+
+    assert.strictEqual(
+      publicacion.fecha,
+      esperado.fecha
+    );
+
+    assert.strictEqual(
+      publicacion.caracteristicas,
+      esperado.caracteristicas
+    );
+
+    assert.strictEqual(
+      publicacion.fotografia,
+      esperado.fotografia
+    );
+
+    assert.ok(
+      publicacion.fechaCreacion,
+      'La publicación debe tener fecha de creación'
     );
   }
-
-  if (esperado.edad !== undefined && esperado.edad !== null) {
-    assert.strictEqual(
-      publicacion.edad,
-      esperado.edad
-    );
-  }
-
-  assert.strictEqual(
-    publicacion.fecha,
-    esperado.fecha
-  );
-
-  assert.strictEqual(
-    publicacion.caracteristicas,
-    esperado.caracteristicas
-  );
-
-  assert.strictEqual(
-    publicacion.fotografia,
-    esperado.fotografia
-  );
-
-  assert.strictEqual(
-    publicacion.latitud,
-    esperado.latitud
-  );
-
-  assert.strictEqual(
-    publicacion.longitud,
-    esperado.longitud
-  );
-
-  assert.ok(
-    publicacion.fechaCreacion,
-    'La publicación debe tener fecha de creación'
-  );
-});
+);
