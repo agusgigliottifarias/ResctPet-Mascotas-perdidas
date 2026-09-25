@@ -28,20 +28,43 @@ const INITIAL_STATE = {
 // Geocodificación directa: busca lat/lng a partir del texto ingresado si no abrió el mapa
 const buscarCoordenadasPorTexto = async (textoUbicacion) => {
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(textoUbicacion)}&limit=1`
-    );
-    const data = await res.json();
-    if (data && data.length > 0) {
-      return {
-        latitud: parseFloat(data[0].lat),
-        longitud: parseFloat(data[0].lon)
-      };
+    const texto = textoUbicacion.trim();
+
+    if (!texto) {
+      return null;
     }
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        texto
+      )}&limit=1&addressdetails=1`
+    );
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    const resultado = data[0];
+
+    if (!resultado.lat || !resultado.lon) {
+      return null;
+    }
+
+    return {
+      latitud: parseFloat(resultado.lat),
+      longitud: parseFloat(resultado.lon),
+      nombreEncontrado: resultado.display_name
+    };
   } catch (err) {
     console.error('Error al geocodificar dirección:', err);
+    return null;
   }
-  return null;
 };
 
 export const usePublicacionForm = ({ onSuccess, onClose }) => {
@@ -125,21 +148,32 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
       setLoading(true);
 
       let latitudFinal = formData.latitud;
-      let longitudFinal = formData.longitud;
+let longitudFinal = formData.longitud;
 
-      if ((!latitudFinal || !longitudFinal) && formData.ubicacion.trim()) {
-        const coords = await buscarCoordenadasPorTexto(formData.ubicacion.trim());
-        if (coords) {
-          latitudFinal = coords.latitud;
-          longitudFinal = coords.longitud;
-        }
-      }
+if (formData.ubicacion.trim()) {
+  const coords = await buscarCoordenadasPorTexto(
+    formData.ubicacion.trim()
+  );
 
-      if (!latitudFinal || !longitudFinal) {
-        setError('Por favor, selecciona una ubicación en el mapa (botón 📍 Mapa) o ingresa una calle válida.');
-        setLoading(false);
-        return;
-      }
+  if (coords) {
+    latitudFinal = coords.latitud;
+    longitudFinal = coords.longitud;
+  } else {
+    setError(
+      'La ubicación ingresada no es válida. Por favor, ingresá una calle, ciudad o ubicación válida.'
+    );
+    setLoading(false);
+    return;
+  }
+}
+
+if (latitudFinal === null || longitudFinal === null) {
+  setError(
+    'Por favor, seleccioná una ubicación válida en el mapa o ingresá una dirección válida.'
+  );
+  setLoading(false);
+  return;
+}
 
       const storedUser = localStorage.getItem('user');
       const userId = storedUser ? JSON.parse(storedUser).id : 1;
