@@ -21,7 +21,7 @@ const INITIAL_STATE = {
   latitud: null,
   longitud: null,
   caracteristicas: '',
-  nombreFoto: 'mascota.jpg',
+  nombreFoto: '',
   fotoBase64: null
 };
 
@@ -98,12 +98,17 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
   const handleRemovePhoto = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
-    setFormData((prev) => ({ ...prev, fotoBase64: null, nombreFoto: 'mascota.jpg' }));
+    setFormData((prev) => ({ ...prev, fotoBase64: null, nombreFoto: '' }));
   }, [previewUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    if (!formData.fotoBase64) {
+  setError('La fotografía de la mascota es obligatoria.');
+  return;
+}
 
     // Validación según tipo
     if (formData.tipo === TIPO_PUBLICACION.PERDIDA && !formData.nombre.trim()) {
@@ -162,7 +167,7 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
         edad: formData.edad || 'DESCONOCIDA',
         fecha: fechaAutomatica,
         caracteristicas: textoCaracteristicas || 'Mascota reportada',
-        fotografia: formData.fotoBase64 || formData.nombreFoto || 'mascota.jpg',
+        fotografia: formData.fotoBase64,
         latitud: latitudFinal,
         longitud: longitudFinal,
         usuarioId: userId
