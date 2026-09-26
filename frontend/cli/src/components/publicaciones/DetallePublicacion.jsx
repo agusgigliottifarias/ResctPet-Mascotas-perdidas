@@ -80,8 +80,33 @@ export default function DetallePublicacion({
   const tipo = (data.tipoPublicacion || data.tipo || 'PERDIDA').toUpperCase();
   const esPerdido = tipo.includes('PERDID');
   const foto = data.fotografia || data.imagenUrl || null;
-  const descripcion = data.caracteristicas || data.descripcion || 'Sin descripción adicional.';
   const fechaTexto = data.fecha || (data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : 'Reciente');
+
+  // --- OBTENCIÓN Y LIMPIEZA DE DATOS ---
+
+  // 1. Nombre
+  const matchNombre = (data.caracteristicas || data.descripcion || '').match(/Nombre:\s*([^.]+)\./i);
+  const nombreLimpio =
+    data.nombre ||
+    data.nombreMascota ||
+    (matchNombre && matchNombre[1] ? matchNombre[1].trim() : null) ||
+    (esPerdido ? 'Perrito' : 'Mascota');
+
+  // 2. Ubicación / Última vez visto
+  const matchZona = (data.caracteristicas || data.descripcion || '').match(/\[Zona:\s*([^\]]+)\]/i);
+  const ubicacionTexto =
+    (matchZona && matchZona[1] ? matchZona[1].trim() : null) ||
+    data.ubicacion ||
+    data.direccion ||
+    'Ubicación registrada en mapa';
+
+  // 3. Características (descripción sin prefijos duplicados)
+  const descripcionRaw = data.caracteristicas || data.descripcion || '';
+  const descripcionLimpia = descripcionRaw
+    .replace(/^Nombre:\s*[^.]+\.\s*/i, '')
+    .replace(/\[Zona:\s*([^\]]+)\]/g, '')
+    .replace(/\[Retención:\s*([^\]]+)\]/g, '')
+    .trim() || 'Sin detalles adicionales.';
 
   return (
     <>
@@ -119,7 +144,7 @@ export default function DetallePublicacion({
             {foto ? (
               <img
                 src={foto.startsWith('data:') || foto.startsWith('http') ? foto : `data:image/jpeg;base64,${foto}`}
-                alt={data.nombre || 'Mascota'}
+                alt={nombreLimpio}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -143,10 +168,10 @@ export default function DetallePublicacion({
           {/* Título */}
           <div className="mb-4">
             <h2 className="text-2xl font-black text-[#2D3748] tracking-tight leading-none mb-1">
-              {data.nombre || (esPerdido ? 'Mascota perdida' : 'Mascota encontrada')}
+              {esPerdido ? 'Mascota perdida' : 'Mascota encontrada'}
             </h2>
             <p className="text-xs font-bold text-[#718096]">
-              {data.especie || 'Mascota'} • {data.raza || 'Mestizo'}
+              {data.especie || 'PERRO'} • {data.raza || 'MESTIZO'}
             </p>
           </div>
 
@@ -157,7 +182,7 @@ export default function DetallePublicacion({
                 ESPECIE
               </span>
               <span className="text-xs font-black text-[#2D3748]">
-                {data.especie || 'Desconocida'}
+                {data.especie || 'PERRO'}
               </span>
             </div>
 
@@ -166,7 +191,7 @@ export default function DetallePublicacion({
                 EDAD
               </span>
               <span className="text-xs font-black text-[#2D3748]">
-                {data.edad || 'Aproximada'}
+                {data.edad || 'DESCONOCIDA'}
               </span>
             </div>
 
@@ -175,12 +200,12 @@ export default function DetallePublicacion({
                 REPORTE
               </span>
               <span className="text-xs font-black text-[#2D3748]">
-                #{data.id || '1'}
+                #{data.id || '2'}
               </span>
             </div>
           </div>
 
-          {/* Ubicación */}
+          {/* Ubicación aproximada / Última vez visto en caja desplegada */}
           <div className="mb-4">
             <span className="block text-[10px] font-black tracking-wider text-[#718096] uppercase mb-1.5">
               UBICACIÓN APROXIMADA
@@ -195,28 +220,36 @@ export default function DetallePublicacion({
               </div>
               <div>
                 <h3 className="text-xs font-bold text-[#2D3748] leading-tight">
-                  {data.caracteristicas?.match(/\[Zona:\s*([^\]]+)\]/)?.[1] ||
-                   data.ubicacion ||
-                   'Ubicación registrada en mapa'}
+                  {ubicacionTexto}
                 </h3>
               </div>
             </div>
           </div>
 
-          {/* Características */}
+          {/* Bloque Características con los 3 renglones solicitados */}
           <div className="mb-4">
-            <span className="block text-xs font-bold text-[#2D3748] mb-1">
+            <span className="block text-xs font-bold text-[#2D3748] mb-1.5">
               Características
             </span>
-            <p className="text-xs text-[#718096] leading-relaxed font-medium">
-              {descripcion}
-            </p>
+            <div className="text-xs text-[#718096] leading-relaxed space-y-1">
+              <p>
+                <span className="font-semibold text-[#4A5568]">Nombre:</span> {nombreLimpio}
+              </p>
+              <p>
+                <span className="font-semibold text-[#4A5568]">
+                  {esPerdido ? 'Ultima ves visto:' : 'Ubicación:'}
+                </span>{' '}
+                {ubicacionTexto}
+              </p>
+              <p>
+                <span className="font-semibold text-[#4A5568]">Informacioón de la mascota:</span> {descripcionLimpia}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Acciones */}
         <div className="space-y-2 pt-2">
-          {/* Criterio 1 y 5: Botón para solicitar coincidencias a demanda */}
           <button
             onClick={() => setIsCoincidenciasOpen(true)}
             className="w-full py-3 rounded-xl bg-white border-2 border-[#FF7A59] text-[#FF7A59] text-xs font-bold hover:bg-[#FF7A59]/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
@@ -240,7 +273,7 @@ export default function DetallePublicacion({
         </div>
       </aside>
 
-      {/* Modal de Coincidencias integrado */}
+      {/* Modal de Coincidencias */}
       <ModalCoincidencias
         isOpen={isCoincidenciasOpen}
         publicacionOrigen={data}
