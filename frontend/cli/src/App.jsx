@@ -7,13 +7,15 @@ export default function App() {
   // Estado para el modal de crear publicación
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [refrescoKey, setRefrescoKey] = useState(0); // Contador para refrescar el listado automáticamente
 
   // Estados para Búsqueda y Detalle
-  const [isBusquedaOpen, setIsBusquedaOpen] = useState(true); // Inicia visible para que lo pruebes
-  const [detalleId, setDetalleId] = useState(null); // ID de la mascota a consultar
+  const [isBusquedaOpen, setIsBusquedaOpen] = useState(true);
+  const [detalleId, setDetalleId] = useState(null);
 
   const handleSuccess = () => {
     setSuccessMessage("¡Publicación enviada exitosamente!");
+    setRefrescoKey((prev) => prev + 1); // Dispara la recarga automática de la lista
     setTimeout(() => setSuccessMessage(null), 4000);
   };
 
@@ -21,18 +23,18 @@ export default function App() {
     <div className="relative h-screen w-screen bg-[#F7F4EE] overflow-hidden flex">
       {/* Toast de éxito */}
       {successMessage && (
-        <div className="fixed top-6 right-6 z-50 rounded-2xl bg-emerald-500 text-white px-5 py-3 shadow-lg font-bold text-sm">
+        <div className="fixed top-6 right-6 z-50 rounded-2xl bg-emerald-500 text-white px-5 py-3 shadow-lg font-bold text-sm animate-bounce">
           {successMessage}
         </div>
       )}
 
-      {/* 1. Panel de Búsqueda de Publicaciones (Tarjeta Búsqueda) */}
+      {/* 1. Panel de Búsqueda de Publicaciones */}
       {isBusquedaOpen && (
         <BusquedaPublicaciones
           isOpen={isBusquedaOpen}
+          refrescoKey={refrescoKey}
           onClose={() => setIsBusquedaOpen(false)}
           onSelectPublicacion={(id) => {
-            // Al hacer clic en una tarjeta de la búsqueda, abrimos su detalle
             setDetalleId(id);
           }}
         />
@@ -67,7 +69,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* 3. Panel de Detalle de Publicación (Tarjeta Detalle) */}
+      {/* 3. Panel de Detalle de Publicación */}
       {detalleId && (
         <div className="fixed top-4 bottom-4 right-4 z-40">
           <DetallePublicacion
@@ -77,12 +79,11 @@ export default function App() {
         </div>
       )}
 
-      {/* 4. Modal de Crear Publicación (Tarjeta Formulario) */}
+      {/* 4. Modal de Crear Publicación */}
       <ModalPublicacion
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSuccess}
-        onOpenMapPicker={() => alert("Próximamente: Selector de mapa interactivo")}
       />
     </div>
   );

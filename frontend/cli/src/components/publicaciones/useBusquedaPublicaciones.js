@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { buscarPublicaciones } from '../../api/publicacionesApi';
 
-export const useBusquedaPublicaciones = () => {
+export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
   // Filtros de texto, especie, tipo y raza
   const [termino, setTermino] = useState('');
   const [tipo, setTipo] = useState(''); // '' (todos), 'PERDIDA', 'ENCONTRADA'
@@ -95,10 +95,10 @@ export const useBusquedaPublicaciones = () => {
     );
   }, [cercaniaActiva]);
 
-  // Se ejecuta automáticamente al cambiar cualquier filtro reactivo
+  // Se ejecuta automáticamente al cambiar cualquier filtro reactivo o al publicar una nueva mascota
   useEffect(() => {
     ejecutarBusqueda();
-  }, [tipo, especie, raza, cercaniaActiva, coordsUsuario]);
+  }, [tipo, especie, raza, cercaniaActiva, coordsUsuario, refrescoKey]);
 
   // Paginación
   const totalPaginas = Math.ceil(publicaciones.length / itemsPorPagina) || 1;

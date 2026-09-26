@@ -22,6 +22,7 @@ const calcularDistanciaKm = (lat1, lon1, lat2, lon2) => {
 
 export default function BusquedaPublicaciones({
   isOpen = true,
+  refrescoKey = 0,
   onClose,
   onSelectPublicacion
 }) {
@@ -48,7 +49,7 @@ export default function BusquedaPublicaciones({
     paginaActual,
     totalPaginas,
     setPaginaActual
-  } = useBusquedaPublicaciones();
+  } = useBusquedaPublicaciones({ refrescoKey });
 
   if (!isOpen) return null;
 
@@ -93,7 +94,7 @@ export default function BusquedaPublicaciones({
             onChange={(e) => setTermino(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && ejecutarBusqueda()}
             placeholder="Buscar por color, seña o característica..."
-            className="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FF7A59] bg-[#F7F4EE]/60 text-gray-800 placeholder:text-gray-400"
+            className="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FF7A59] bg-[#F7F4EE]/60"
           />
           <button
             onClick={ejecutarBusqueda}
