@@ -206,7 +206,7 @@ export default function DetallePublicacion({
           {/* Características */}
           <div className="mb-4">
             <span className="block text-xs font-bold text-[#2D3748] mb-1">
-              Características y señas
+              Características
             </span>
             <p className="text-xs text-[#718096] leading-relaxed font-medium">
               {descripcion}
