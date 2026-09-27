@@ -20,9 +20,9 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  // Paginación en bloques de 4 tarjetas
+  // Paginación en bloques de 5 tarjetas para estilo Bento Grid
   const [paginaActual, setPaginaActual] = useState(1);
-  const itemsPorPagina = 4;
+  const itemsPorPagina = 5;
 
   // Consulta combinada a Spring Boot: GET /api/publicaciones/buscar
   const ejecutarBusqueda = useCallback(async () => {

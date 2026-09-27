@@ -2,84 +2,96 @@ import { useState } from "react";
 import ModalPublicacion from "./components/publicaciones/ModalPublicacion";
 import DetallePublicacion from "./components/publicaciones/DetallePublicacion";
 import BusquedaPublicaciones from "./components/publicaciones/BusquedaPublicaciones";
+import DockNavegacion from "./components/layout/DockNavegacion";
+import MapaPrincipal from "./components/mapa/MapaPrincipal";
 
 export default function App() {
-  // Estado para el modal de crear publicación
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [refrescoKey, setRefrescoKey] = useState(0); // Contador para refrescar el listado automáticamente
+  const [refrescoKey, setRefrescoKey] = useState(0);
 
-  // Estados para Búsqueda y Detalle
+  // Panel de Búsqueda y Detalle
   const [isBusquedaOpen, setIsBusquedaOpen] = useState(true);
   const [detalleId, setDetalleId] = useState(null);
+  const [activeTab, setActiveTab] = useState('buscar');
 
   const handleSuccess = () => {
     setSuccessMessage("¡Publicación enviada exitosamente!");
-    setRefrescoKey((prev) => prev + 1); // Dispara la recarga automática de la lista
+    setRefrescoKey((prev) => prev + 1);
     setTimeout(() => setSuccessMessage(null), 4000);
   };
 
   return (
     <div className="relative h-screen w-screen bg-[#F7F4EE] overflow-hidden flex">
-      {/* Toast de éxito */}
+      {/* Toast de confirmación de éxito */}
       {successMessage && (
         <div className="fixed top-6 right-6 z-50 rounded-2xl bg-emerald-500 text-white px-5 py-3 shadow-lg font-bold text-sm animate-bounce">
           {successMessage}
         </div>
       )}
 
-      {/* 1. Panel de Búsqueda de Publicaciones */}
+      {/* 1. DOCK LATERAL FLOTANTE FIGMA (Maneja toda la navegación y el publicar) */}
+      <DockNavegacion
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          if (tab === 'buscar') {
+            setIsBusquedaOpen(true);
+          } else {
+            setIsBusquedaOpen(false);
+          }
+        }}
+        onPublicarClick={() => setIsModalOpen(true)}
+      />
+
+      {/* 2. PANEL LATERAL DE BÚSQUEDA */}
       {isBusquedaOpen && (
-        <BusquedaPublicaciones
-          isOpen={isBusquedaOpen}
-          refrescoKey={refrescoKey}
-          onClose={() => setIsBusquedaOpen(false)}
-          onSelectPublicacion={(id) => {
-            setDetalleId(id);
-          }}
-        />
+        <div className="ml-28 h-full z-30">
+          <BusquedaPublicaciones
+            isOpen={isBusquedaOpen}
+            refrescoKey={refrescoKey}
+            onClose={() => {
+              setIsBusquedaOpen(false);
+              setActiveTab('inicio');
+            }}
+            onSelectPublicacion={(id) => {
+              setDetalleId(id);
+            }}
+          />
+        </div>
       )}
 
-      {/* 2. Área Central / Espacio del Mapa */}
-      <main className="flex-1 h-full p-8 flex flex-col justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-[#2D3748]">
-            <span className="text-[#1A202C]">Yira</span>
-            <span className="text-[#FF7A59]">ndo</span>
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">Mascotas perdidas y encontradas</p>
-        </div>
+      {/* 3. ÁREA CENTRAL: MAPA COMPLETO Y MARCA */}
+      <main className="relative flex-1 h-full overflow-hidden">
+        {/* Mapa Leaflet interactivo adaptado a tu paleta */}
+        <MapaPrincipal
+          refrescoKey={refrescoKey}
+          onSelectPublicacion={(id) => setDetalleId(id)}
+        />
 
-        {/* Botones de control inferiores */}
-        <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3">
-          <button
-            onClick={() => setIsBusquedaOpen((prev) => !prev)}
-            className="flex items-center gap-2 rounded-full bg-white border border-[#E2ECE4] text-[#2D3748] px-5 py-3 font-bold text-sm shadow-md hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
-          >
-            <span>🔍</span>
-            <span>{isBusquedaOpen ? "Ocultar Búsqueda" : "Abrir Búsqueda"}</span>
-          </button>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 rounded-full bg-[#FF7A59] text-white px-6 py-3 font-bold text-sm shadow-[0_8px_20px_rgba(255,122,89,0.35)] hover:bg-[#ff6842] active:scale-95 transition-all cursor-pointer"
-          >
-            <span>🐾</span> Publicar Mascota
-          </button>
+        {/* Tarjeta flotante con el nombre de Yirando */}
+        <div className={`absolute top-6 z-20 transition-all pointer-events-none ${!isBusquedaOpen ? 'left-28' : 'left-8'}`}>
+          <div className="bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-lg border border-white/80 pointer-events-auto">
+            <h1 className="text-2xl font-black text-[#2D3748] leading-tight">
+              <span className="text-[#1A202C]">Yira</span>
+              <span className="text-[#FF7A59]">ndo</span>
+            </h1>
+            <p className="text-xs text-gray-500 font-semibold">Mascotas perdidas y encontradas</p>
+          </div>
         </div>
       </main>
 
-      {/* 3. Panel de Detalle de Publicación */}
+      {/* 4. MODAL / DETALLE DE PUBLICACIÓN */}
       {detalleId && (
         <div className="fixed top-4 bottom-4 right-4 z-40">
           <DetallePublicacion
-            publicacionId={detalleId}
+            id={detalleId}
             onClose={() => setDetalleId(null)}
           />
         </div>
       )}
 
-      {/* 4. Modal de Crear Publicación */}
+      {/* 5. MODAL DE CREAR PUBLICACIÓN (Abierto desde la huella del Dock) */}
       <ModalPublicacion
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
