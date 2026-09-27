@@ -4,6 +4,7 @@ import ModalCoincidencias from './ModalCoincidencias';
 
 export default function DetallePublicacion({
   publicacionId,
+  id,
   publicacion: publicacionProp,
   onClose,
   onNotificarAvistamiento,
@@ -11,15 +12,14 @@ export default function DetallePublicacion({
   onIrABusquedaManual,
   onSelectCandidato
 }) {
+  const targetId = publicacionId || id;
   const [data, setData] = useState(publicacionProp || null);
-  const [cargando, setCargando] = useState(Boolean(publicacionId && !publicacionProp));
+  const [cargando, setCargando] = useState(Boolean(targetId && !publicacionProp));
   const [error, setError] = useState(null);
-  
-  // Estado para el modal de coincidencias
   const [isCoincidenciasOpen, setIsCoincidenciasOpen] = useState(false);
 
   useEffect(() => {
-    if (!publicacionId) {
+    if (!targetId) {
       if (publicacionProp) setData(publicacionProp);
       return;
     }
@@ -29,18 +29,31 @@ export default function DetallePublicacion({
       setCargando(true);
       setError(null);
       try {
-        const res = await getPublicacionPorId(publicacionId);
-        if (isMounted) {
+        const res = await getPublicacionPorId(targetId);
+        if (isMounted && res) {
           setData(res);
+          setCargando(false);
+          return;
         }
       } catch (err) {
-        console.error('Error al obtener la publicación del backend:', err);
-        if (isMounted) {
+        console.warn('Publicación no encontrada en backend, buscando en almacenamiento local...');
+      }
+
+      // Si no viene del backend o es creada en sesión local, la leemos de localStorage
+      try {
+        const locales = JSON.parse(localStorage.getItem('resctpet_publicaciones') || '[]');
+        const encontrada = locales.find((p) => String(p.id) === String(targetId));
+
+        if (encontrada && isMounted) {
+          setData(encontrada);
+        } else if (isMounted) {
           setError('No se pudo cargar la información de la publicación.');
         }
-      } finally {
-        if (isMounted) setCargando(false);
+      } catch (storageErr) {
+        if (isMounted) setError('Error al leer datos locales.');
       }
+
+      if (isMounted) setCargando(false);
     };
 
     fetchPublicacion();
@@ -48,7 +61,7 @@ export default function DetallePublicacion({
     return () => {
       isMounted = false;
     };
-  }, [publicacionId, publicacionProp]);
+  }, [targetId, publicacionProp]);
 
   if (cargando) {
     return (
@@ -62,7 +75,11 @@ export default function DetallePublicacion({
   if (error || !data) {
     return (
       <aside className="w-full sm:w-[450px] h-full bg-white/95 backdrop-blur-xl border border-white/80 shadow-[0_20px_50px_-15px_rgba(45,55,72,0.2)] rounded-[32px] p-6 flex flex-col items-center justify-center text-center z-40">
-        <span className="text-4xl mb-3">⚠️</span>
+        <div className="w-12 h-12 rounded-full bg-red-50 text-red-400 flex items-center justify-center mb-3">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
         <h3 className="text-base font-bold text-[#2D3748] mb-1">Publicación no disponible</h3>
         <p className="text-xs text-gray-500 mb-6">{error || 'No se encontraron datos para este ID.'}</p>
         {onClose && (
@@ -82,6 +99,12 @@ export default function DetallePublicacion({
   const foto = data.fotografia || data.imagenUrl || null;
   const fechaTexto = data.fecha || (data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : 'Reciente');
 
+  // Formateo del ID para la cabecera (ej: PET004 o PET...)
+  const rawId = String(data.id || '1');
+  const formattedId = rawId.startsWith('pub_') 
+    ? `PET${rawId.slice(-4).toUpperCase()}`
+    : `PET${rawId.padStart(3, '0')}`;
+
   // --- OBTENCIÓN Y LIMPIEZA DE DATOS ---
 
   // 1. Nombre
@@ -90,15 +113,16 @@ export default function DetallePublicacion({
     data.nombre ||
     data.nombreMascota ||
     (matchNombre && matchNombre[1] ? matchNombre[1].trim() : null) ||
-    (esPerdido ? 'Perrito' : 'Mascota');
+    (esPerdido ? 'Mascota perdida' : 'Mascota encontrada');
 
-  // 2. Ubicación / Última vez visto
+  // 2. Ubicación
   const matchZona = (data.caracteristicas || data.descripcion || '').match(/\[Zona:\s*([^\]]+)\]/i);
   const ubicacionTexto =
     (matchZona && matchZona[1] ? matchZona[1].trim() : null) ||
+    data.barrio ||
     data.ubicacion ||
     data.direccion ||
-    'Ubicación registrada en mapa';
+    'Puerto Madryn, Chubut';
 
   // 3. Características (descripción sin prefijos duplicados)
   const descripcionRaw = data.caracteristicas || data.descripcion || '';
@@ -112,7 +136,7 @@ export default function DetallePublicacion({
     <>
       <aside className="w-full sm:w-[450px] h-full bg-white/95 backdrop-blur-xl border border-white/80 shadow-[0_20px_50px_-15px_rgba(45,55,72,0.2)] rounded-[32px] p-6 flex flex-col justify-between overflow-y-auto z-40 transition-all duration-300">
         <div>
-          {/* Header */}
+          {/* Header con tipo a la izquierda e ID + Cerrar a la derecha */}
           <div className="flex items-center justify-between mb-4">
             <span
               className={`px-3.5 py-1.5 rounded-full text-[11px] font-black tracking-wider uppercase border shadow-xs ${
@@ -124,34 +148,41 @@ export default function DetallePublicacion({
               {esPerdido ? 'PERDIDO' : 'ENCONTRADO'}
             </span>
 
-            {onClose && (
-              <button
-                onClick={onClose}
-                aria-label="Cerrar detalle"
-                className="w-8 h-8 rounded-full bg-[#F7F4EE] hover:bg-gray-200 text-[#718096] hover:text-[#2D3748] flex items-center justify-center transition-colors cursor-pointer text-sm font-bold shadow-xs"
-              >
-                ✕
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-xl bg-[#F7F4EE] border border-black/5 text-[#718096] text-[11px] font-black tracking-wide">
+                ID #{formattedId}
+              </span>
+
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  aria-label="Cerrar detalle"
+                  className="w-8 h-8 rounded-full bg-[#F7F4EE] hover:bg-gray-200 text-[#718096] hover:text-[#2D3748] flex items-center justify-center transition-colors cursor-pointer text-sm font-bold shadow-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Foto */}
+          {/* Foto adaptable sin recortar según aspect ratio */}
           <div
-            className={`relative w-full h-52 rounded-2xl flex items-center justify-center overflow-hidden border border-black/5 shadow-inner mb-4 transition-colors ${
-              esPerdido ? 'bg-[#FFF2ED]' : 'bg-[#EBF9F8]'
+            className={`relative w-full h-56 rounded-2xl flex items-center justify-center overflow-hidden border border-black/5 shadow-inner mb-4 transition-colors ${
+              esPerdido ? 'bg-[#FFF2ED]/70' : 'bg-[#EBF9F8]/70'
             }`}
           >
             {foto ? (
               <img
                 src={foto.startsWith('data:') || foto.startsWith('http') ? foto : `data:image/jpeg;base64,${foto}`}
                 alt={nombreLimpio}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-1"
               />
             ) : (
-              <div className="flex flex-col items-center justify-center">
-                <span className="text-7xl select-none filter drop-shadow-sm opacity-80 transition-transform duration-300 hover:scale-110">
-                  🐾
-                </span>
+              <div className="flex flex-col items-center justify-center text-gray-400">
+                <svg className="w-16 h-16 opacity-40 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-xs font-semibold text-gray-400">Sin foto disponible</span>
               </div>
             )}
 
@@ -168,15 +199,15 @@ export default function DetallePublicacion({
           {/* Título */}
           <div className="mb-4">
             <h2 className="text-2xl font-black text-[#2D3748] tracking-tight leading-none mb-1">
-              {esPerdido ? 'Mascota perdida' : 'Mascota encontrada'}
+              {nombreLimpio}
             </h2>
             <p className="text-xs font-bold text-[#718096]">
               {data.especie || 'PERRO'} • {data.raza || 'MESTIZO'}
             </p>
           </div>
 
-          {/* Grid de Atributos */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          {/* Grid de Atributos (2 columnas ahora que el reporte está arriba) */}
+          <div className="grid grid-cols-2 gap-2.5 mb-4">
             <div className="rounded-xl bg-[#F7F4EE]/90 p-2.5 border border-black/5 text-center">
               <span className="block text-[9px] font-black tracking-wider text-[#A0AEC0] uppercase mb-0.5">
                 ESPECIE
@@ -194,21 +225,12 @@ export default function DetallePublicacion({
                 {data.edad || 'DESCONOCIDA'}
               </span>
             </div>
-
-            <div className="rounded-xl bg-[#F7F4EE]/90 p-2.5 border border-black/5 text-center">
-              <span className="block text-[9px] font-black tracking-wider text-[#A0AEC0] uppercase mb-0.5">
-                REPORTE
-              </span>
-              <span className="text-xs font-black text-[#2D3748]">
-                #{data.id || '2'}
-              </span>
-            </div>
           </div>
 
-          {/* Ubicación aproximada / Última vez visto en caja desplegada */}
+          {/* Ubicación */}
           <div className="mb-4">
             <span className="block text-[10px] font-black tracking-wider text-[#718096] uppercase mb-1.5">
-              UBICACIÓN APROXIMADA
+              UBICACIÓN
             </span>
             <div className="rounded-xl bg-[#F7F4EE]/90 p-3 border border-black/5 flex items-start gap-3 shadow-xs">
               <div
@@ -216,7 +238,10 @@ export default function DetallePublicacion({
                   esPerdido ? 'bg-[#FF7A59]/15 text-[#FF7A59]' : 'bg-[#2EC4B6]/15 text-[#2EC4B6]'
                 }`}
               >
-                📍
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </div>
               <div>
                 <h3 className="text-xs font-bold text-[#2D3748] leading-tight">
@@ -226,23 +251,17 @@ export default function DetallePublicacion({
             </div>
           </div>
 
-          {/* Bloque Características con los 3 renglones solicitados */}
+          {/* Bloque Características (limpio, sin repetir la ubicación) */}
           <div className="mb-4">
             <span className="block text-xs font-bold text-[#2D3748] mb-1.5">
               Características
             </span>
-            <div className="text-xs text-[#718096] leading-relaxed space-y-1">
+            <div className="text-xs text-[#718096] leading-relaxed space-y-1.5">
               <p>
                 <span className="font-semibold text-[#4A5568]">Nombre:</span> {nombreLimpio}
               </p>
               <p>
-                <span className="font-semibold text-[#4A5568]">
-                  {esPerdido ? 'Ultima ves visto:' : 'Ubicación:'}
-                </span>{' '}
-                {ubicacionTexto}
-              </p>
-              <p>
-                <span className="font-semibold text-[#4A5568]">Informacioón de la mascota:</span> {descripcionLimpia}
+                <span className="font-semibold text-[#4A5568]">Información:</span> {descripcionLimpia}
               </p>
             </div>
           </div>
@@ -254,7 +273,9 @@ export default function DetallePublicacion({
             onClick={() => setIsCoincidenciasOpen(true)}
             className="w-full py-3 rounded-xl bg-white border-2 border-[#FF7A59] text-[#FF7A59] text-xs font-bold hover:bg-[#FF7A59]/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
           >
-            <span>🎯</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             <span>Buscar Coincidencias</span>
           </button>
 

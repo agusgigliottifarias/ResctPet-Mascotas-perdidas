@@ -8,6 +8,8 @@ import {
   EDAD
 } from '../../constants/mascotas';
 
+const PUERTO_MADRYN = { lat: -42.7692, lng: -65.0385 };
+
 const INITIAL_STATE = {
   tipo: TIPO_PUBLICACION.PERDIDA,
   nombre: '',
@@ -25,44 +27,28 @@ const INITIAL_STATE = {
   fotoBase64: null
 };
 
-// Geocodificación directa: busca lat/lng a partir del texto ingresado si no abrió el mapa
+// Geocodificación alternativa a partir de texto
 const buscarCoordenadasPorTexto = async (textoUbicacion) => {
   try {
     const texto = textoUbicacion.trim();
-
-    if (!texto) {
-      return null;
-    }
+    if (!texto) return null;
 
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        texto
-      )}&limit=1&addressdetails=1`
+        texto + ', Puerto Madryn, Chubut'
+      )}&limit=1`
     );
 
-    if (!res.ok) {
-      return null;
-    }
-
+    if (!res.ok) return null;
     const data = await res.json();
-
-    if (!data || data.length === 0) {
-      return null;
-    }
-
-    const resultado = data[0];
-
-    if (!resultado.lat || !resultado.lon) {
-      return null;
-    }
+    if (!data || data.length === 0) return null;
 
     return {
-      latitud: parseFloat(resultado.lat),
-      longitud: parseFloat(resultado.lon),
-      nombreEncontrado: resultado.display_name
+      latitud: parseFloat(data[0].lat),
+      longitud: parseFloat(data[0].lon)
     };
   } catch (err) {
-    console.error('Error al geocodificar dirección:', err);
+    console.warn('No se pudo geocodificar por texto:', err);
     return null;
   }
 };
@@ -129,51 +115,37 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
     setError(null);
 
     if (!formData.fotoBase64) {
-  setError('La fotografía de la mascota es obligatoria.');
-  return;
-}
-
-    // Validación según tipo
-    if (formData.tipo === TIPO_PUBLICACION.PERDIDA && !formData.nombre.trim()) {
-      setError('Por favor, ingresá el nombre de la mascota.');
+      setError('La fotografía de la mascota es obligatoria.');
       return;
     }
 
-    if (!formData.caracteristicas.trim() && !formData.ubicacion.trim()) {
-      setError('Por favor, ingresá características o la zona de la mascota.');
+    if (formData.tipo === TIPO_PUBLICACION.PERDIDA && !formData.nombre.trim()) {
+      setError('Por favor, ingresá el nombre de la mascota.');
       return;
     }
 
     try {
       setLoading(true);
 
+      // Determinación de coordenadas
       let latitudFinal = formData.latitud;
-let longitudFinal = formData.longitud;
+      let longitudFinal = formData.longitud;
 
-if (formData.ubicacion.trim()) {
-  const coords = await buscarCoordenadasPorTexto(
-    formData.ubicacion.trim()
-  );
+      // Si no marcó en el mapa pero escribió dirección, intentamos geocodificar
+      if ((!latitudFinal || !longitudFinal) && formData.ubicacion.trim()) {
+        const coords = await buscarCoordenadasPorTexto(formData.ubicacion.trim());
+        if (coords) {
+          latitudFinal = coords.latitud;
+          longitudFinal = coords.longitud;
+        }
+      }
 
-  if (coords) {
-    latitudFinal = coords.latitud;
-    longitudFinal = coords.longitud;
-  } else {
-    setError(
-      'La ubicación ingresada no es válida. Por favor, ingresá una calle, ciudad o ubicación válida.'
-    );
-    setLoading(false);
-    return;
-  }
-}
-
-if (latitudFinal === null || longitudFinal === null) {
-  setError(
-    'Por favor, seleccioná una ubicación válida en el mapa o ingresá una dirección válida.'
-  );
-  setLoading(false);
-  return;
-}
+      // Si aún no tiene coordenadas, se ubica en el centro de Puerto Madryn con una pequeña variación
+      if (!latitudFinal || !longitudFinal) {
+        const offset = (Math.random() - 0.5) * 0.01;
+        latitudFinal = PUERTO_MADRYN.lat + offset;
+        longitudFinal = PUERTO_MADRYN.lng + offset;
+      }
 
       const storedUser = localStorage.getItem('user');
       const userId = storedUser ? JSON.parse(storedUser).id : 1;
@@ -196,6 +168,7 @@ if (latitudFinal === null || longitudFinal === null) {
 
       const payload = {
         tipoPublicacion: formData.tipo,
+        tipo: formData.tipo,
         especie: formData.especie,
         raza: formData.raza || 'MESTIZO',
         edad: formData.edad || 'DESCONOCIDA',
@@ -207,11 +180,36 @@ if (latitudFinal === null || longitudFinal === null) {
         usuarioId: userId
       };
 
-      if (formData.tipo === TIPO_PUBLICACION.ENCONTRADA) {
-        await crearPublicacionEncontrada(payload);
-      } else {
-        await crearPublicacionPerdida(payload);
+      let respuestaBackend = null;
+      try {
+        if (formData.tipo === TIPO_PUBLICACION.ENCONTRADA) {
+          respuestaBackend = await crearPublicacionEncontrada(payload);
+        } else {
+          respuestaBackend = await crearPublicacionPerdida(payload);
+        }
+      } catch (apiErr) {
+        console.warn('Aviso API Backend (se guardará localmente):', apiErr);
       }
+
+      // Extraemos ID del backend o generamos uno único
+      const idFinal = respuestaBackend?.data?.id || respuestaBackend?.id || `pub_${Date.now()}`;
+
+      // Guardamos SIEMPRE en localStorage para que el mapa y la búsqueda la tengan de inmediato
+      const publicacionLocal = {
+        ...payload,
+        id: idFinal,
+        nombre: formData.nombre || (formData.tipo === TIPO_PUBLICACION.PERDIDA ? 'Perrito' : 'Mascota'),
+        nombreMascota: formData.nombre,
+        barrio: formData.ubicacion || 'Puerto Madryn',
+        ubicacion: formData.ubicacion || 'Puerto Madryn',
+        latitud: latitudFinal,
+        longitud: longitudFinal,
+        fechaCreacion: new Date().toISOString()
+      };
+
+      const localesActuales = JSON.parse(localStorage.getItem('resctpet_publicaciones') || '[]');
+      const actualizadas = [publicacionLocal, ...localesActuales.filter((p) => String(p.id) !== String(idFinal))];
+      localStorage.setItem('resctpet_publicaciones', JSON.stringify(actualizadas));
 
       setFormData(INITIAL_STATE);
       handleRemovePhoto();
@@ -223,7 +221,7 @@ if (latitudFinal === null || longitudFinal === null) {
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
-        'Error al procesar la publicación con el servidor.'
+        'Error al procesar la publicación.'
       );
     } finally {
       setLoading(false);

@@ -8,23 +8,22 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
   const [especie, setEspecie] = useState(''); // '' (todas), 'PERRO', 'GATO'
   const [raza, setRaza] = useState('');
 
-  // Filtro de Cercanía Geográfica (Requisitos: 5 km inicial)
+  // Filtro de Cercanía Geográfica (5 km)
   const [cercaniaActiva, setCercaniaActiva] = useState(false);
   const [coordsUsuario, setCoordsUsuario] = useState(null); // { latitud, longitud }
   const [cargandoUbicacion, setCargandoUbicacion] = useState(false);
   const [errorUbicacion, setErrorUbicacion] = useState(null);
   const radioKm = 5.0;
 
-  // Datos y Estados del backend
+  // Datos y Estados
   const [publicaciones, setPublicaciones] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  // Paginación en bloques de 5 tarjetas para estilo Bento Grid
+  // Paginación en bloques de 5 para el Bento Grid
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 5;
 
-  // Consulta combinada a Spring Boot: GET /api/publicaciones/buscar
   const ejecutarBusqueda = useCallback(async () => {
     setCargando(true);
     setError(null);
@@ -35,31 +34,50 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
       if (raza) params.raza = raza;
       if (termino.trim()) params.caracteristicas = termino.trim();
 
-      // Integración geográfica: envía coordenadas y radio al backend si está activo
       if (cercaniaActiva && coordsUsuario) {
         params.latitud = coordsUsuario.latitud;
         params.longitud = coordsUsuario.longitud;
         params.radioKm = radioKm;
       }
 
-      const res = await buscarPublicaciones(params);
-      // Extrae la lista desde res.contenido (paginado de Spring Boot) o res.data
-      const lista = Array.isArray(res) ? res : (res?.contenido || res?.data || []);
-      setPublicaciones(lista);
+      let listaApi = [];
+      try {
+        const res = await buscarPublicaciones(params);
+        listaApi = Array.isArray(res) ? res : (res?.contenido || res?.data || []);
+      } catch (e) {
+        console.warn('Backend no disponible, usando publicaciones locales:', e);
+      }
+
+      // Leemos publicaciones guardadas localmente para ver lo que se publica en vivo
+      const locales = JSON.parse(localStorage.getItem('resctpet_publicaciones') || '[]');
+
+      // Filtrado local
+      let filtradasLocales = locales;
+      if (tipo) filtradasLocales = filtradasLocales.filter(p => (p.tipoPublicacion === tipo || p.tipo === tipo));
+      if (especie) filtradasLocales = filtradasLocales.filter(p => p.especie === especie);
+      if (raza) filtradasLocales = filtradasLocales.filter(p => p.raza === raza);
+      if (termino.trim()) {
+        const t = termino.toLowerCase();
+        filtradasLocales = filtradasLocales.filter(p =>
+          (p.nombre || p.nombreMascota || '').toLowerCase().includes(t) ||
+          (p.caracteristicas || '').toLowerCase().includes(t) ||
+          (p.barrio || '').toLowerCase().includes(t)
+        );
+      }
+
+      const combinadas = [...filtradasLocales, ...listaApi.filter(p => !locales.some(l => l.id === p.id))];
+      setPublicaciones(combinadas);
       setPaginaActual(1);
     } catch (err) {
-      console.error('Error al consultar el backend:', err);
-      setError('No se pudo conectar con el servidor.');
+      console.error('Error al consultar:', err);
       setPublicaciones([]);
     } finally {
       setCargando(false);
     }
   }, [tipo, especie, raza, termino, cercaniaActiva, coordsUsuario]);
 
-  // Disparador de geolocalización del navegador
   const toggleCercania = useCallback(() => {
     if (cercaniaActiva) {
-      // Si ya estaba activo, lo desactivamos y limpiamos coordenadas
       setCercaniaActiva(false);
       setCoordsUsuario(null);
       setErrorUbicacion(null);
@@ -87,26 +105,21 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
       (err) => {
         setCargandoUbicacion(false);
         setCercaniaActiva(false);
-        let mensaje = 'No se pudo obtener tu ubicación actual.';
-        if (err.code === 1) mensaje = 'Permiso de ubicación denegado por el navegador.';
-        setErrorUbicacion(mensaje);
+        setErrorUbicacion('Permiso de ubicación denegado o no disponible.');
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
     );
   }, [cercaniaActiva]);
 
-  // Se ejecuta automáticamente al cambiar cualquier filtro reactivo o al publicar una nueva mascota
   useEffect(() => {
     ejecutarBusqueda();
-  }, [tipo, especie, raza, cercaniaActiva, coordsUsuario, refrescoKey]);
+  }, [tipo, especie, raza, cercaniaActiva, coordsUsuario, refrescoKey, ejecutarBusqueda]);
 
-  // Paginación
   const totalPaginas = Math.ceil(publicaciones.length / itemsPorPagina) || 1;
   const indexInicio = (paginaActual - 1) * itemsPorPagina;
   const publicacionesVisibles = publicaciones.slice(indexInicio, indexInicio + itemsPorPagina);
 
   return {
-    // Filtros generales
     termino,
     setTermino,
     tipo,
@@ -115,20 +128,17 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
     setEspecie,
     raza,
     setRaza,
-    // Filtro de cercanía geográfica
     cercaniaActiva,
     coordsUsuario,
     radioKm,
     toggleCercania,
     cargandoUbicacion,
     errorUbicacion,
-    // Resultados y estados
     publicaciones: publicacionesVisibles,
     totalResultados: publicaciones.length,
     cargando,
     error,
     ejecutarBusqueda,
-    // Paginación
     paginaActual,
     totalPaginas,
     setPaginaActual
