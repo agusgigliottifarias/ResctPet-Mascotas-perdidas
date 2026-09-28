@@ -283,7 +283,7 @@ export default function MapPickerModal({
               disabled={cargandoGPS}
               className="flex items-center gap-1.5 rounded-xl bg-[#2EC4B6]/10 border border-[#2EC4B6]/30 px-3 py-1.5 text-xs font-bold text-[#2EC4B6] hover:bg-[#2EC4B6]/20 transition-all disabled:opacity-50"
             >
-              🧭{' '}
+              {' '}
               {cargandoGPS
                 ? 'Obteniendo mi GPS...'
                 : 'Usar mi ubicación actual'}

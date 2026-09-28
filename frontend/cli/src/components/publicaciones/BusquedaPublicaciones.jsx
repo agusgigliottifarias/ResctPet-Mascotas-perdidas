@@ -364,7 +364,7 @@ export default function BusquedaPublicaciones({
 
           {/* Footer del buscador */}
           <div className="pt-2 border-t border-gray-100 text-[11px] font-bold text-gray-400">
-            {totalResultados} {totalResultados === 1 ? 'coincidencia' : 'coincidencias'}
+            {totalResultados} {totalResultados === 1 ? 'resultado' : 'resultados'}
           </div>
         </aside>
       )}
