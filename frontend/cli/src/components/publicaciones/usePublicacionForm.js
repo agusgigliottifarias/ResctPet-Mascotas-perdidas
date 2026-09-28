@@ -1,5 +1,9 @@
 import { useState, useCallback } from 'react';
-import { crearPublicacionPerdida, crearPublicacionEncontrada } from '../../api/publicacionesApi';
+import {
+  crearPublicacionPerdida,
+  crearPublicacionEncontrada
+} from '../../api/publicacionesApi';
+
 import {
   TIPO_PUBLICACION,
   ESPECIE,
@@ -8,7 +12,10 @@ import {
   EDAD
 } from '../../constants/mascotas';
 
-const PUERTO_MADRYN = { lat: -42.7692, lng: -65.0385 };
+const PUERTO_MADRYN = {
+  lat: -42.7692,
+  lng: -65.0385
+};
 
 const INITIAL_STATE = {
   tipo: TIPO_PUBLICACION.PERDIDA,
@@ -27,10 +34,11 @@ const INITIAL_STATE = {
   fotoBase64: null
 };
 
-// Geocodificación alternativa a partir de texto
+// Geocodificación a partir de texto
 const buscarCoordenadasPorTexto = async (textoUbicacion) => {
   try {
     const texto = textoUbicacion.trim();
+
     if (!texto) return null;
 
     const res = await fetch(
@@ -40,7 +48,9 @@ const buscarCoordenadasPorTexto = async (textoUbicacion) => {
     );
 
     if (!res.ok) return null;
+
     const data = await res.json();
+
     if (!data || data.length === 0) return null;
 
     return {
@@ -48,66 +58,120 @@ const buscarCoordenadasPorTexto = async (textoUbicacion) => {
       longitud: parseFloat(data[0].lon)
     };
   } catch (err) {
-    console.warn('No se pudo geocodificar por texto:', err);
+    console.warn(
+      'No se pudo geocodificar por texto:',
+      err
+    );
+
     return null;
   }
 };
 
-export const usePublicacionForm = ({ onSuccess, onClose }) => {
-  const [formData, setFormData] = useState(INITIAL_STATE);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+export const usePublicacionForm = ({
+  onSuccess,
+  onClose
+}) => {
+  const [formData, setFormData] =
+    useState(INITIAL_STATE);
 
-  const handleChange = useCallback((field, value) => {
-    setFormData((prev) => {
-      if (field === 'especie') {
-        return { ...prev, especie: value, raza: 'MESTIZO' };
-      }
-      if (field === 'tipo') {
+  const [previewUrl, setPreviewUrl] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState(null);
+
+  const handleChange = useCallback(
+    (field, value) => {
+      setFormData((prev) => {
+
+        if (field === 'especie') {
+          return {
+            ...prev,
+            especie: value,
+            raza: 'MESTIZO'
+          };
+        }
+
+        if (field === 'tipo') {
+          return {
+            ...prev,
+            tipo: value,
+            sexo:
+              value === TIPO_PUBLICACION.PERDIDA &&
+              prev.sexo === SEXO.DESCONOCIDO
+                ? SEXO.MACHO
+                : prev.sexo
+          };
+        }
+
         return {
           ...prev,
-          tipo: value,
-          sexo: value === TIPO_PUBLICACION.PERDIDA && prev.sexo === SEXO.DESCONOCIDO
-            ? SEXO.MACHO
-            : prev.sexo
+          [field]: value
         };
+      });
+    },
+    []
+  );
+
+  const handleFileChange = useCallback(
+    (file) => {
+      if (!file) return;
+
+      if (
+        !['image/jpeg', 'image/png'].includes(
+          file.type
+        )
+      ) {
+        setError(
+          'Formato inválido. Solo se admiten archivos PNG o JPG.'
+        );
+        return;
       }
-      return { ...prev, [field]: value };
-    });
-  }, []);
 
-  const handleFileChange = useCallback((file) => {
-    if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        setError(
+          'La foto no puede superar los 5MB.'
+        );
+        return;
+      }
 
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      setError('Formato inválido. Solo se admiten archivos PNG o JPG.');
-      return;
-    }
+      setError(null);
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La foto no puede superar los 5MB.');
-      return;
-    }
+      setPreviewUrl(
+        URL.createObjectURL(file)
+      );
 
-    setError(null);
-    setPreviewUrl(URL.createObjectURL(file));
+      const reader = new FileReader();
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({
-        ...prev,
-        nombreFoto: file.name || 'mascota.jpg',
-        fotoBase64: reader.result
-      }));
-    };
-    reader.readAsDataURL(file);
-  }, []);
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          nombreFoto:
+            file.name || 'mascota.jpg',
+          fotoBase64: reader.result
+        }));
+      };
+
+      reader.readAsDataURL(file);
+    },
+    []
+  );
 
   const handleRemovePhoto = useCallback(() => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     setPreviewUrl(null);
-    setFormData((prev) => ({ ...prev, fotoBase64: null, nombreFoto: '' }));
+
+    setFormData((prev) => ({
+      ...prev,
+      fotoBase64: null,
+      nombreFoto: ''
+    }));
   }, [previewUrl]);
 
   const handleSubmit = async (e) => {
@@ -115,12 +179,48 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
     setError(null);
 
     if (!formData.fotoBase64) {
-      setError('La fotografía de la mascota es obligatoria.');
+      setError(
+        'La fotografía de la mascota es obligatoria.'
+      );
       return;
     }
 
-    if (formData.tipo === TIPO_PUBLICACION.PERDIDA && !formData.nombre.trim()) {
-      setError('Por favor, ingresá el nombre de la mascota.');
+    if (
+      formData.tipo === TIPO_PUBLICACION.PERDIDA &&
+      !formData.nombre.trim()
+    ) {
+      setError(
+        'Por favor, ingresá el nombre de la mascota.'
+      );
+      return;
+    }
+
+    // Las características son obligatorias
+    const caracteristicas =
+      formData.caracteristicas.trim();
+
+    if (!caracteristicas) {
+      setError(
+        'Las características de la mascota son obligatorias.'
+      );
+      return;
+    }
+
+    if (
+      !/[aeiouáéíóúü]/i.test(caracteristicas) ||
+      !/\s/.test(caracteristicas)
+    ) {
+      setError(
+        'Ingresá características válidas de la mascota.'
+      );
+      return;
+    }
+
+    // La ubicación es obligatoria
+    if (!formData.ubicacion.trim()) {
+      setError(
+        'La ubicación de la mascota es obligatoria.'
+      );
       return;
     }
 
@@ -131,49 +231,86 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
       let latitudFinal = formData.latitud;
       let longitudFinal = formData.longitud;
 
-      // Si no marcó en el mapa pero escribió dirección, intentamos geocodificar
-      if ((!latitudFinal || !longitudFinal) && formData.ubicacion.trim()) {
-        const coords = await buscarCoordenadasPorTexto(formData.ubicacion.trim());
+      // Si no hay coordenadas pero hay una ubicación escrita,
+      // intentamos encontrarla mediante Nominatim.
+      if (
+        (latitudFinal === null ||
+          latitudFinal === undefined ||
+          longitudFinal === null ||
+          longitudFinal === undefined) &&
+        formData.ubicacion.trim()
+      ) {
+        const coords =
+          await buscarCoordenadasPorTexto(
+            formData.ubicacion.trim()
+          );
+
         if (coords) {
           latitudFinal = coords.latitud;
           longitudFinal = coords.longitud;
         }
       }
 
-      // Si aún no tiene coordenadas, se ubica en el centro de Puerto Madryn con una pequeña variación
-      if (!latitudFinal || !longitudFinal) {
-        const offset = (Math.random() - 0.5) * 0.01;
-        latitudFinal = PUERTO_MADRYN.lat + offset;
-        longitudFinal = PUERTO_MADRYN.lng + offset;
+      // Si no se pudieron obtener coordenadas válidas,
+      // NO se crea la publicación.
+      if (
+        latitudFinal === null ||
+        latitudFinal === undefined ||
+        longitudFinal === null ||
+        longitudFinal === undefined ||
+        Number.isNaN(Number(latitudFinal)) ||
+        Number.isNaN(Number(longitudFinal))
+      ) {
+        setError(
+          'No se pudo identificar la ubicación. Seleccioná una ubicación válida en el mapa.'
+        );
+        return;
       }
 
-      const storedUser = localStorage.getItem('user');
-      const userId = storedUser ? JSON.parse(storedUser).id : 1;
+      const storedUser =
+        localStorage.getItem('user');
 
-      let textoCaracteristicas = formData.caracteristicas.trim();
+      const userId = storedUser
+        ? JSON.parse(storedUser).id
+        : 1;
+
+      let textoCaracteristicas =
+        caracteristicas;
+
       if (formData.nombre.trim()) {
-        textoCaracteristicas = `Nombre: ${formData.nombre.trim()}. ${textoCaracteristicas}`;
-      }
-      if (formData.ubicacion.trim()) {
-        textoCaracteristicas = `${textoCaracteristicas} [Zona: ${formData.ubicacion.trim()}]`;
-      }
-      if (formData.estadoRetencion.trim()) {
-        textoCaracteristicas = `${textoCaracteristicas} [Retención: ${formData.estadoRetencion.trim()}]`;
-      }
-      if (textoCaracteristicas.length > 500) {
-        textoCaracteristicas = textoCaracteristicas.substring(0, 500);
+        textoCaracteristicas =
+          `Nombre: ${formData.nombre.trim()}. ${textoCaracteristicas}`;
       }
 
-      const fechaAutomatica = new Date().toISOString().slice(0, 10);
+      if (formData.ubicacion.trim()) {
+        textoCaracteristicas =
+          `${textoCaracteristicas} [Zona: ${formData.ubicacion.trim()}]`;
+      }
+
+      if (formData.estadoRetencion.trim()) {
+        textoCaracteristicas =
+          `${textoCaracteristicas} [Retención: ${formData.estadoRetencion.trim()}]`;
+      }
+
+      if (textoCaracteristicas.length > 500) {
+        textoCaracteristicas =
+          textoCaracteristicas.substring(0, 500);
+      }
+
+      const fechaAutomatica =
+        new Date()
+          .toISOString()
+          .slice(0, 10);
 
       const payload = {
         tipoPublicacion: formData.tipo,
         tipo: formData.tipo,
         especie: formData.especie,
         raza: formData.raza || 'MESTIZO',
-        edad: formData.edad || 'DESCONOCIDA',
+        edad:
+          formData.edad || 'DESCONOCIDA',
         fecha: fechaAutomatica,
-        caracteristicas: textoCaracteristicas || 'Mascota reportada',
+        caracteristicas: textoCaracteristicas,
         fotografia: formData.fotoBase64,
         latitud: latitudFinal,
         longitud: longitudFinal,
@@ -181,41 +318,87 @@ export const usePublicacionForm = ({ onSuccess, onClose }) => {
       };
 
       let respuestaBackend = null;
+
       try {
-        if (formData.tipo === TIPO_PUBLICACION.ENCONTRADA) {
-          respuestaBackend = await crearPublicacionEncontrada(payload);
+        if (
+          formData.tipo ===
+          TIPO_PUBLICACION.ENCONTRADA
+        ) {
+          respuestaBackend =
+            await crearPublicacionEncontrada(
+              payload
+            );
         } else {
-          respuestaBackend = await crearPublicacionPerdida(payload);
+          respuestaBackend =
+            await crearPublicacionPerdida(
+              payload
+            );
         }
       } catch (apiErr) {
-        console.warn('Aviso API Backend (se guardará localmente):', apiErr);
+        console.warn(
+          'Aviso API Backend (se guardará localmente):',
+          apiErr
+        );
       }
 
-      // Extraemos ID del backend o generamos uno único
-      const idFinal = respuestaBackend?.data?.id || respuestaBackend?.id || `pub_${Date.now()}`;
+      const idFinal =
+        respuestaBackend?.data?.id ||
+        respuestaBackend?.id ||
+        `pub_${Date.now()}`;
 
-      // Guardamos SIEMPRE en localStorage para que el mapa y la búsqueda la tengan de inmediato
       const publicacionLocal = {
         ...payload,
         id: idFinal,
-        nombre: formData.nombre || (formData.tipo === TIPO_PUBLICACION.PERDIDA ? 'Perrito' : 'Mascota'),
-        nombreMascota: formData.nombre,
-        barrio: formData.ubicacion || 'Puerto Madryn',
-        ubicacion: formData.ubicacion || 'Puerto Madryn',
+        nombre:
+          formData.nombre ||
+          (
+            formData.tipo ===
+            TIPO_PUBLICACION.PERDIDA
+              ? 'Perrito'
+              : 'Mascota'
+          ),
+        nombreMascota:
+          formData.nombre,
+        barrio:
+          formData.ubicacion ||
+          'Puerto Madryn',
+        ubicacion:
+          formData.ubicacion ||
+          'Puerto Madryn',
         latitud: latitudFinal,
         longitud: longitudFinal,
-        fechaCreacion: new Date().toISOString()
+        fechaCreacion:
+          new Date().toISOString()
       };
 
-      const localesActuales = JSON.parse(localStorage.getItem('resctpet_publicaciones') || '[]');
-      const actualizadas = [publicacionLocal, ...localesActuales.filter((p) => String(p.id) !== String(idFinal))];
-      localStorage.setItem('resctpet_publicaciones', JSON.stringify(actualizadas));
+      const localesActuales =
+        JSON.parse(
+          localStorage.getItem(
+            'resctpet_publicaciones'
+          ) || '[]'
+        );
+
+      const actualizadas = [
+        publicacionLocal,
+        ...localesActuales.filter(
+          (p) =>
+            String(p.id) !==
+            String(idFinal)
+        )
+      ];
+
+      localStorage.setItem(
+        'resctpet_publicaciones',
+        JSON.stringify(actualizadas)
+      );
 
       setFormData(INITIAL_STATE);
+
       handleRemovePhoto();
 
       if (onSuccess) onSuccess();
       if (onClose) onClose();
+
     } catch (err) {
       setError(
         err?.response?.data?.message ||
