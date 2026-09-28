@@ -7,7 +7,18 @@ import { TIPO_PUBLICACION, ESPECIE } from '../../constants/mascotas';
 
 const PUERTO_MADRYN = [-42.7692, -65.0385];
 
-// Pines ampliados con el logo vectorial protagonista y colores temáticos
+// Formatea textos tipo AZUL_RUSO a "Azul Ruso"
+const formatearTexto = (str) => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+    .join(' ');
+};
+
+// Pines circulares con el logo vectorial de Perro o Gato
 const crearPinMascota = (tipo, especie) => {
   const esPerdida = String(tipo).toUpperCase().includes('PERDID');
   const colorFondo = esPerdida ? '#FF7A59' : '#2EC4B6';
@@ -83,7 +94,6 @@ function CentradorAutomatico({ coords }) {
   return null;
 }
 
-// Componente que maneja los marcadores con auto-zoom cinemático
 function CapaMarcadores({ publicaciones, onSelectPublicacion }) {
   const map = useMap();
 
@@ -94,6 +104,7 @@ function CapaMarcadores({ publicaciones, onSelectPublicacion }) {
         const esPerdida = String(tipoFinal).toUpperCase().includes('PERDID');
         const colorHex = esPerdida ? '#FF7A59' : '#2EC4B6';
         const label = esPerdida ? 'Perdida' : 'Encontrada';
+        const razaFormateada = formatearTexto(pub.raza) || 'Raza no especificada';
 
         return (
           <Marker
@@ -102,7 +113,6 @@ function CapaMarcadores({ publicaciones, onSelectPublicacion }) {
             icon={crearPinMascota(tipoFinal, pub.especie)}
             eventHandlers={{
               click: () => {
-                // Auto-zoom suave al nivel de calle (zoom 16) centrando la mascota
                 map.flyTo([pub.latitud, pub.longitud], 16, {
                   duration: 0.9,
                   easeLinearity: 0.28
@@ -134,13 +144,12 @@ function CapaMarcadores({ publicaciones, onSelectPublicacion }) {
                   {pub.nombre || pub.nombreMascota || 'Mascota reportada'}
                 </h4>
                 <p className="text-[11px] text-gray-500 m-0 mt-0.5 font-medium leading-snug">
-                  {pub.raza || 'Raza no especificada'}
+                  {razaFormateada}
                   {pub.barrio ? ` • ${pub.barrio}` : ''}
                 </p>
 
-                <div className="mt-2 text-[10px] font-bold text-gray-400 flex items-center justify-between border-t border-gray-100 pt-1.5">
-                  <span>Click para ver detalle en calle</span>
-                  <span style={{ color: colorHex }}>🔍</span>
+                <div className="mt-2 text-[10px] font-bold text-gray-400 border-t border-gray-100 pt-1.5 text-center">
+                  <span>Click para ver en detalle</span>
                 </div>
               </div>
             </Tooltip>

@@ -202,7 +202,8 @@ export default function DetallePublicacion({
               {nombreLimpio}
             </h2>
             <p className="text-xs font-bold text-[#718096]">
-              {data.especie || 'PERRO'} • {data.raza || 'MESTIZO'}
+              {String(data.especie || 'Perro').toLowerCase().replace(/^\w/, c => c.toUpperCase())} • 
+            {String(data.raza || 'Mestizo').toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
             </p>
           </div>
 
