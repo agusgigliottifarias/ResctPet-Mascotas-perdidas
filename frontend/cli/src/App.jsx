@@ -15,7 +15,7 @@ export default function App() {
 
   const handleSuccess = () => {
     setSuccessMessage("¡Publicación creada exitosamente!");
-    setRefrescoKey((prev) => prev + 1); // Dispara la recarga de pines en el mapa
+    setRefrescoKey((prev) => prev + 1);
     setTimeout(() => setSuccessMessage(null), 4000);
   };
 
@@ -28,7 +28,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 1. MAPA PRINCIPAL: Pantalla completa en el fondo con todos los pines interactivos */}
+      {/* 1. MAPA PRINCIPAL */}
       <MapaPrincipal
         refrescoKey={refrescoKey}
         onSelectPublicacion={(id) => setDetalleId(id)}
@@ -39,13 +39,12 @@ export default function App() {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           setActiveTab(tab);
-          // Si hace clic en inicio, cerramos cualquier detalle para ver el mapa limpio
           if (tab === 'inicio') setDetalleId(null);
         }}
         onPublicarClick={() => setIsModalOpen(true)}
       />
 
-      {/* 3. ISLA DE BÚSQUEDA Y BENTO GRID: Solo cuando está activa la pestaña 'buscar' */}
+      {/* 3. ISLA DE BÚSQUEDA Y LISTA DE 5 */}
       {activeTab === 'buscar' && (
         <BusquedaPublicaciones
           isOpen={true}
@@ -56,20 +55,29 @@ export default function App() {
         />
       )}
 
-      {/* 4. BRANDING YIRANDO (Visible en Inicio mientras no haya un detalle abierto) */}
+      {/* 4. BRANDING YIRANDO CON LOGO DEL PERRO A LA IZQUIERDA */}
       {activeTab === 'inicio' && !detalleId && (
         <div className="fixed top-6 left-28 z-20 pointer-events-none">
-          <div className="bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-lg border border-white/80 pointer-events-auto">
-            <h1 className="text-2xl font-black text-[#2D3748] leading-tight">
-              <span className="text-[#1A202C]">Yira</span>
-              <span className="text-[#FF7A59]">ndo</span>
-            </h1>
-            <p className="text-xs text-gray-500 font-semibold">Mascotas perdidas y encontradas</p>
+          <div className="bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-white/80 pointer-events-auto flex items-center gap-3">
+            <img 
+              src="/logo-Yira.svg" 
+              alt="Logo Yirando" 
+              className="w-10 h-10 object-contain drop-shadow-xs"
+            />
+            <div>
+              <h1 className="text-2xl font-black text-[#2D3748] leading-none">
+                <span className="text-[#1A202C]">Yira</span>
+                <span className="text-[#FF7A59]">ndo</span>
+              </h1>
+              <p className="text-[11px] text-gray-500 font-semibold mt-0.5">
+                Mascotas perdidas y encontradas
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 5. PANEL DE DETALLE COMPLETO (Se abre a la derecha al hacer clic en cualquier pin) */}
+      {/* 5. PANEL DE DETALLE */}
       {detalleId && (
         <div className="fixed top-6 bottom-6 right-6 z-40 animate-in fade-in slide-in-from-right-8 duration-300">
           <DetallePublicacion

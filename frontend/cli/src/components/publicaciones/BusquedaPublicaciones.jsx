@@ -61,7 +61,6 @@ export default function BusquedaPublicaciones({
     return () => document.removeEventListener('mousedown', handleClickAfuera);
   }, []);
 
-  // Si no está abierta la búsqueda y tampoco debe mostrarse en Inicio, no renderiza nada
   if (!isOpen && !mostrarEnInicio) return null;
 
   const listaRazas = [
@@ -82,7 +81,7 @@ export default function BusquedaPublicaciones({
   );
 
   const hayFiltrosAvanzados = Boolean(especie || tipo || raza);
-  const debeMostrarBento = mostrarEnInicio || hayCriterioActivo;
+  const debeMostrarPanel = mostrarEnInicio || hayCriterioActivo;
 
   return (
     <>
@@ -147,7 +146,10 @@ export default function BusquedaPublicaciones({
                   : 'bg-teal-50/90 text-[#2EC4B6] border-[#2EC4B6]/40 hover:bg-teal-100 hover:border-[#2EC4B6]'
               }`}
             >
-              <span className="text-base select-none">📡</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
             </button>
 
             {/* Botón Filtros (Sliders SVG) */}
@@ -172,7 +174,7 @@ export default function BusquedaPublicaciones({
                 </svg>
               </button>
 
-              {/* RECUADRO FLOTANTE CON CustomSelect */}
+              {/* RECUADRO FLOTANTE CON FILTROS */}
               <AnimatePresence>
                 {menuFiltroAbierto && (
                   <motion.div
@@ -215,7 +217,7 @@ export default function BusquedaPublicaciones({
                               : 'text-[#718096] hover:text-[#2D3748]'
                           }`}
                         >
-                          🐾 Todas
+                          Todas
                         </button>
                         <button
                           type="button"
@@ -226,7 +228,7 @@ export default function BusquedaPublicaciones({
                               : 'text-[#718096] hover:text-[#2D3748]'
                           }`}
                         >
-                          🐶 Perros
+                          Perros
                         </button>
                         <button
                           type="button"
@@ -237,7 +239,7 @@ export default function BusquedaPublicaciones({
                               : 'text-[#718096] hover:text-[#2D3748]'
                           }`}
                         >
-                          🐱 Gatos
+                          Gatos
                         </button>
                       </div>
                     </div>
@@ -296,7 +298,7 @@ export default function BusquedaPublicaciones({
                               : 'text-[#718096] hover:text-[#FF7A59]'
                           }`}
                         >
-                          🚨 Perdidos
+                          Perdidos
                         </button>
                         <button
                           type="button"
@@ -307,7 +309,7 @@ export default function BusquedaPublicaciones({
                               : 'text-[#718096] hover:text-[#2EC4B6]'
                           }`}
                         >
-                          🐾 Encontrados
+                          Encontrados
                         </button>
                       </div>
                     </div>
@@ -341,7 +343,7 @@ export default function BusquedaPublicaciones({
               )}
               {especie && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FF7A59]/15 text-[#FF7A59] border border-[#FF7A59]/30">
-                  <span>{especie === ESPECIE.PERRO ? '🐶 Perros' : '🐱 Gatos'}</span>
+                  <span>{especie === ESPECIE.PERRO ? 'Perros' : 'Gatos'}</span>
                   <button type="button" onClick={() => { setEspecie(''); setRaza(''); }} className="ml-0.5 cursor-pointer">✕</button>
                 </span>
               )}
@@ -360,19 +362,20 @@ export default function BusquedaPublicaciones({
             </div>
           )}
 
-          {/* Footer */}
+          {/* Footer del buscador */}
           <div className="pt-2 border-t border-gray-100 text-[11px] font-bold text-gray-400">
-            {totalResultados} coincidencias
+            {totalResultados} {totalResultados === 1 ? 'coincidencia' : 'coincidencias'}
           </div>
         </aside>
       )}
 
       {/* ========================================================================= */}
-      {/* 2. RECUADRO DERECHO: BENTO GRID (Visible en Inicio y en Búsquedas activas) */}
+      {/* 2. RECUADRO DERECHO: LISTA VERTICAL ORDENADA DE 5 PUBLICACIONES */}
       {/* ========================================================================= */}
-      {debeMostrarBento && (
-        <section className="fixed right-6 top-6 bottom-6 w-[430px] z-30 bg-white/92 backdrop-blur-2xl rounded-[36px] border border-white/80 shadow-[0_20px_50px_-10px_rgba(45,55,72,0.18)] p-5 flex flex-col justify-between transition-all duration-400 ease-out animate-in fade-in slide-in-from-right-8">
+      {debeMostrarPanel && (
+        <section className="fixed right-6 top-6 bottom-6 w-[440px] z-30 bg-white/95 backdrop-blur-2xl rounded-[36px] border border-white/80 shadow-[0_20px_50px_-10px_rgba(45,55,72,0.18)] p-5 flex flex-col justify-between transition-all duration-300 ease-out animate-in fade-in slide-in-from-right-8">
           
+          {/* Cabecera */}
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <div>
               <h3 className="text-sm font-black text-[#2D3748]">
@@ -387,13 +390,14 @@ export default function BusquedaPublicaciones({
               </p>
             </div>
             {totalResultados > 0 && (
-              <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full text-xs font-extrabold text-[#2D3748]">
+              <div className="flex items-center gap-1.5 bg-[#F7F4EE] px-3 py-1 rounded-full text-xs font-black text-[#2D3748] border border-black/5">
                 <span>Página {paginaActual} de {totalPaginas}</span>
               </div>
             )}
           </div>
 
-          <div className="flex-1 my-3 overflow-hidden">
+          {/* Lista Vertical de 5 publicaciones del mismo tamaño */}
+          <div className="flex-1 my-3 overflow-y-auto space-y-2.5 pr-1">
             {cargando ? (
               <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400">
                 <div className="w-7 h-7 border-2 border-[#FF7A59] border-t-transparent rounded-full animate-spin" />
@@ -404,109 +408,86 @@ export default function BusquedaPublicaciones({
                 <p className="text-xs font-bold text-red-500 text-center">{error}</p>
               </div>
             ) : publicaciones.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3 bg-gray-50/60 rounded-3xl border border-dashed border-gray-200">
-                <div className="w-14 h-14 rounded-full bg-white shadow-xs flex items-center justify-center text-2xl">
-                  🐾
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3 bg-[#F7F4EE]/60 rounded-3xl border border-dashed border-gray-200">
+                <div className="w-12 h-12 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-400">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-[#2D3748]">No hay publicaciones todavía</h4>
+                  <h4 className="text-sm font-black text-[#2D3748]">No hay coincidencias</h4>
                   <p className="text-xs text-gray-400 mt-1 max-w-[240px]">
-                    Tocá la huella central para publicar la primera mascota perdida o encontrada.
+                    No se encontraron mascotas con los filtros seleccionados.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2.5 h-full">
-                {/* TARJETA 1: HERO */}
-                {publicaciones[0] && (() => {
-                  const p = publicaciones[0];
-                  const dist = cercaniaActiva && coordsUsuario && p.coordenadas
-                    ? calcularDistanciaKm(coordsUsuario.latitud, coordsUsuario.longitud, p.coordenadas.lat, p.coordenadas.lng)
-                    : null;
-
-                  const tipoFinal = p.tipoPublicacion || p.tipo;
-                  const esPerdida = tipoFinal === TIPO_PUBLICACION.PERDIDA || tipoFinal === 'PERDIDA';
-                  const fotoFinal = p.fotografia || p.imagenUrl;
-
-                  return (
-                    <div
-                      onClick={() => onSelectPublicacion && onSelectPublicacion(p.id)}
-                      className="col-span-2 bg-gradient-to-br from-orange-50/70 to-white rounded-3xl p-3 border border-[#FF7A59]/25 shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-3 group"
-                    >
-                      <div className="w-16 h-16 rounded-2xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-black/5 group-hover:scale-105 transition">
-                        {fotoFinal ? (
-                          <img src={fotoFinal} alt={p.nombre || p.nombreMascota || 'Mascota'} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-3xl">{p.especie === ESPECIE.GATO ? '🐱' : '🐶'}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                            esPerdida ? 'bg-[#FF7A59] text-white' : 'bg-[#2EC4B6] text-white'
-                          }`}>
-                            {esPerdida ? 'Perdida' : 'Encontrada'}
-                          </span>
-                          {dist !== null && (
-                            <span className="text-[10px] font-bold text-[#FF7A59]">a {dist.toFixed(1)} km</span>
-                          )}
-                        </div>
-                        <h4 className="text-sm font-black text-[#2D3748] mt-1 truncate">
-                          {p.nombre || p.nombreMascota || 'Mascota sin nombre'}
-                        </h4>
-                        <p className="text-[11px] text-gray-500 truncate">
-                          {p.raza || 'Raza no especificada'} • {p.barrio || 'Puerto Madryn'}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* TARJETAS 2 a 5: 2x2 MODULARES */}
-                {publicaciones.slice(1, 5).map((pub) => {
+              <div className="flex flex-col gap-2.5">
+                {publicaciones.map((pub) => {
                   const dist = cercaniaActiva && coordsUsuario && pub.coordenadas
                     ? calcularDistanciaKm(coordsUsuario.latitud, coordsUsuario.longitud, pub.coordenadas.lat, pub.coordenadas.lng)
                     : null;
 
                   const tipoFinal = pub.tipoPublicacion || pub.tipo;
-                  const esPerdida = tipoFinal === TIPO_PUBLICACION.PERDIDA || tipoFinal === 'PERDIDA';
+                  const esPerdida = String(tipoFinal).toUpperCase().includes('PERDID');
                   const fotoFinal = pub.fotografia || pub.imagenUrl;
 
                   return (
                     <div
                       key={pub.id}
                       onClick={() => onSelectPublicacion && onSelectPublicacion(pub.id)}
-                      className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-xs hover:border-[#FF7A59]/40 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                      className="w-full bg-white hover:bg-[#FFF9F6] rounded-2xl p-3 border border-gray-200/80 hover:border-[#FF7A59]/40 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex items-center gap-3.5 group"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${
-                          esPerdida ? 'bg-orange-50 text-[#FF7A59]' : 'bg-teal-50 text-[#2EC4B6]'
-                        }`}>
-                          {esPerdida ? 'Perdido' : 'Encontrado'}
-                        </span>
+                      {/* Miniatura cuadrada uniforme */}
+                      <div className="w-14 h-14 rounded-2xl bg-[#F7F4EE] flex-shrink-0 overflow-hidden flex items-center justify-center border border-black/5 group-hover:scale-105 transition-transform duration-200">
                         {fotoFinal ? (
-                          <div className="w-5 h-5 rounded-full overflow-hidden">
-                            <img src={fotoFinal} alt="" className="w-full h-full object-cover" />
-                          </div>
+                          <img
+                            src={fotoFinal.startsWith('data:') || fotoFinal.startsWith('http') ? fotoFinal : `data:image/jpeg;base64,${fotoFinal}`}
+                            alt={pub.nombre || pub.nombreMascota || 'Mascota'}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <span className="text-sm">{pub.especie === ESPECIE.GATO ? '🐱' : '🐶'}</span>
+                          <div className="text-gray-300">
+                            <svg className="w-7 h-7 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
                         )}
                       </div>
 
-                      <div className="my-1.5 min-w-0">
-                        <h5 className="text-xs font-black text-[#2D3748] truncate group-hover:text-[#FF7A59] transition">
-                          {pub.nombre || pub.nombreMascota || 'Sin nombre'}
-                        </h5>
-                        <p className="text-[10px] text-gray-400 font-medium truncate">
-                          {pub.barrio || pub.raza || 'Mascota reportada'}
+                      {/* Información central estructurada */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span
+                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider ${
+                              esPerdida
+                                ? 'bg-[#FF7A59]/15 text-[#FF7A59]'
+                                : 'bg-[#2EC4B6]/15 text-[#2EC4B6]'
+                            }`}
+                          >
+                            {esPerdida ? 'PERDIDO' : 'ENCONTRADO'}
+                          </span>
+
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
+                            {dist !== null && (
+                              <span className="text-[#FF7A59] font-black">a {dist.toFixed(1)} km</span>
+                            )}
+                            <span>{pub.especie === ESPECIE.GATO ? 'Gato' : 'Perro'}</span>
+                          </div>
+                        </div>
+
+                        <h4 className="text-sm font-extrabold text-[#2D3748] truncate group-hover:text-[#FF7A59] transition-colors leading-tight">
+                          {pub.nombre || pub.nombreMascota || 'Mascota sin nombre'}
+                        </h4>
+
+                        <p className="text-[11px] text-gray-500 font-medium truncate mt-0.5">
+                          {pub.raza || 'Mestizo'} {pub.barrio ? `• ${pub.barrio}` : ''}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 pt-1 border-t border-gray-50">
-                        <span>{pub.especie === ESPECIE.GATO ? 'Gato' : 'Perro'}</span>
-                        {dist !== null && (
-                          <span className="text-[#FF7A59]">{dist.toFixed(1)} km</span>
-                        )}
+                      {/* Indicador sutil de selección */}
+                      <div className="text-gray-300 group-hover:text-[#FF7A59] group-hover:translate-x-0.5 transition-all text-sm font-bold pl-1">
+                        →
                       </div>
                     </div>
                   );
@@ -515,30 +496,32 @@ export default function BusquedaPublicaciones({
             )}
           </div>
 
+          {/* Footer de Paginación */}
           {totalPaginas > 1 && publicaciones.length > 0 && (
-            <div className="flex items-center justify-between border-t border-gray-100 pt-2.5">
+            <div className="flex items-center justify-between border-t border-gray-100 pt-3">
               <button
                 type="button"
                 disabled={paginaActual <= 1}
                 onClick={() => setPaginaActual((p) => Math.max(p - 1, 1))}
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold text-gray-700 disabled:opacity-40 transition cursor-pointer"
+                className="px-3 py-1.5 bg-[#F7F4EE] hover:bg-gray-200 rounded-xl text-xs font-bold text-[#2D3748] disabled:opacity-40 transition cursor-pointer"
               >
-                ← Anteriores 5
+                ← Anteriores
               </button>
+
               <span className="text-[11px] font-extrabold text-gray-400 tracking-wider">
                 {paginaActual} de {totalPaginas}
               </span>
+
               <button
                 type="button"
                 disabled={paginaActual >= totalPaginas}
                 onClick={() => setPaginaActual((p) => Math.min(p + 1, totalPaginas))}
-                className="px-3 py-1.5 bg-[#FF7A59] text-white rounded-xl text-xs font-bold hover:bg-[#ff6842] disabled:opacity-40 transition cursor-pointer shadow-xs"
+                className="px-3.5 py-1.5 bg-[#FF7A59] hover:bg-[#ff6842] text-white rounded-xl text-xs font-bold shadow-xs disabled:opacity-40 transition cursor-pointer"
               >
-                Siguientes 5 →
+                Siguientes →
               </button>
             </div>
           )}
-
         </section>
       )}
     </>

@@ -7,42 +7,48 @@ import { TIPO_PUBLICACION, ESPECIE } from '../../constants/mascotas';
 
 const PUERTO_MADRYN = [-42.7692, -65.0385];
 
-// Pines circulares con colores de Figma y animación hover
+// Pines ampliados con el logo vectorial protagonista y colores temáticos
 const crearPinMascota = (tipo, especie) => {
   const esPerdida = String(tipo).toUpperCase().includes('PERDID');
   const colorFondo = esPerdida ? '#FF7A59' : '#2EC4B6';
-  
-  // Icono SVG vectorial de huellita
-  const svgHuella = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-      <path d="M12 14c-1.66 0-3 1.34-3 3 0 1.3.84 2.4 2 2.82V21a1 1 0 1 0 2 0v-1.18c1.16-.42 2-1.52 2-2.82 0-1.66-1.34-3-3-3zm-5.5-2c1.38 0 2.5-1.12 2.5-2.5S7.88 7 6.5 7 4 8.12 4 9.5 5.12 12 6.5 12zm11 0c1.38 0 2.5-1.12 2.5-2.5S18.88 7 17.5 7 15 8.12 15 9.5s1.12 2.5 2.5 2.5zM12 10.5c1.38 0 2.5-1.12 2.5-2.5S13.38 5.5 12 5.5s-2.5 1.12-2.5 2.5 1.12 2.5 2.5 2.5z"/>
-    </svg>
-  `;
+  const esGato = String(especie || '').toUpperCase().includes('GAT');
+  const iconoRuta = esGato ? '/logo-gato.svg' : '/logo-Yira.svg';
 
   return L.divIcon({
     className: 'bg-transparent',
     html: `
       <div style="
-        width: 44px;
-        height: 44px;
+        width: 54px;
+        height: 54px;
         background-color: ${colorFondo};
-        border: 3.5px solid white;
+        border: 4px solid white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.32);
         cursor: pointer;
-        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+        overflow: hidden;
       "
-      onmouseover="this.style.transform='scale(1.22) translateY(-4px)'"
-      onmouseout="this.style.transform='scale(1)'"
+      onmouseover="this.style.transform='scale(1.26) translateY(-6px)'; this.style.boxShadow='0 18px 36px rgba(0,0,0,0.42)'"
+      onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 12px 28px rgba(0,0,0,0.32)'"
       >
-        ${svgHuella}
+        <img 
+          src="${iconoRuta}" 
+          alt="${esGato ? 'Gato' : 'Perro'}" 
+          style="
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.22));
+          " 
+        />
       </div>
     `,
-    iconSize: [44, 44],
-    iconAnchor: [22, 22]
+    iconSize: [54, 54],
+    iconAnchor: [27, 27]
   });
 };
 
@@ -77,6 +83,74 @@ function CentradorAutomatico({ coords }) {
   return null;
 }
 
+// Componente que maneja los marcadores con auto-zoom cinemático
+function CapaMarcadores({ publicaciones, onSelectPublicacion }) {
+  const map = useMap();
+
+  return (
+    <>
+      {publicaciones.map((pub) => {
+        const tipoFinal = pub.tipoPublicacion || pub.tipo;
+        const esPerdida = String(tipoFinal).toUpperCase().includes('PERDID');
+        const colorHex = esPerdida ? '#FF7A59' : '#2EC4B6';
+        const label = esPerdida ? 'Perdida' : 'Encontrada';
+
+        return (
+          <Marker
+            key={pub.id}
+            position={[pub.latitud, pub.longitud]}
+            icon={crearPinMascota(tipoFinal, pub.especie)}
+            eventHandlers={{
+              click: () => {
+                // Auto-zoom suave al nivel de calle (zoom 16) centrando la mascota
+                map.flyTo([pub.latitud, pub.longitud], 16, {
+                  duration: 0.9,
+                  easeLinearity: 0.28
+                });
+                if (onSelectPublicacion) onSelectPublicacion(pub.id);
+              }
+            }}
+          >
+            <Tooltip
+              direction="top"
+              offset={[0, -28]}
+              opacity={1}
+              className="custom-pet-tooltip"
+            >
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-[0_12px_30px_rgba(0,0,0,0.18)] border border-white/80 min-w-[200px] pointer-events-none select-none animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-1.5 gap-2">
+                  <span 
+                    className="text-[9px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider shadow-xs"
+                    style={{ backgroundColor: colorHex }}
+                  >
+                    {label}
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-400">
+                    {pub.especie === ESPECIE.GATO ? 'Gato' : 'Perro'}
+                  </span>
+                </div>
+
+                <h4 className="text-sm font-extrabold text-[#2D3748] m-0 leading-tight">
+                  {pub.nombre || pub.nombreMascota || 'Mascota reportada'}
+                </h4>
+                <p className="text-[11px] text-gray-500 m-0 mt-0.5 font-medium leading-snug">
+                  {pub.raza || 'Raza no especificada'}
+                  {pub.barrio ? ` • ${pub.barrio}` : ''}
+                </p>
+
+                <div className="mt-2 text-[10px] font-bold text-gray-400 flex items-center justify-between border-t border-gray-100 pt-1.5">
+                  <span>Click para ver detalle en calle</span>
+                  <span style={{ color: colorHex }}>🔍</span>
+                </div>
+              </div>
+            </Tooltip>
+          </Marker>
+        );
+      })}
+    </>
+  );
+}
+
 export default function MapaPrincipal({
   refrescoKey = 0,
   onSelectPublicacion
@@ -104,13 +178,9 @@ export default function MapaPrincipal({
         console.warn("Aviso backend al cargar mapa:", err);
       }
 
-      // Leemos publicaciones guardadas localmente
       const locales = JSON.parse(localStorage.getItem('resctpet_publicaciones') || '[]');
-      
-      // Combinamos locales primero y sumamos las del backend sin duplicar IDs
       const combinadas = [...locales, ...listaApi.filter(p => !locales.some(l => String(l.id) === String(p.id)))];
 
-      // Aseguramos coordenadas numéricas para cada publicación
       const conCoordenadas = combinadas.map((p, idx) => {
         let lat = Number(p.latitud);
         let lng = Number(p.longitud);
@@ -136,7 +206,6 @@ export default function MapaPrincipal({
           background-color: #F7F4EE !important;
           font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif !important;
         }
-        /* Elimina el recuadro blanco por defecto de Leaflet para usar nuestra tarjeta limpia */
         .leaflet-tooltip.custom-pet-tooltip {
           background-color: transparent !important;
           border: none !important;
@@ -168,61 +237,10 @@ export default function MapaPrincipal({
           updateWhenIdle={true}
         />
 
-        {publicaciones.map((pub) => {
-          const tipoFinal = pub.tipoPublicacion || pub.tipo;
-          const esPerdida = String(tipoFinal).toUpperCase().includes('PERDID');
-          const colorHex = esPerdida ? '#FF7A59' : '#2EC4B6';
-          const label = esPerdida ? 'Perdida' : 'Encontrada';
-
-          return (
-            <Marker
-              key={pub.id}
-              position={[pub.latitud, pub.longitud]}
-              icon={crearPinMascota(tipoFinal, pub.especie)}
-              eventHandlers={{
-                // Al hacer clic se despliega el lateral con la información completa
-                click: () => {
-                  if (onSelectPublicacion) onSelectPublicacion(pub.id);
-                }
-              }}
-            >
-              {/* Tooltip: solo aparece mientras el cursor esté posado sobre el pin */}
-              <Tooltip
-                direction="top"
-                offset={[0, -24]}
-                opacity={1}
-                className="custom-pet-tooltip"
-              >
-                <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-[0_12px_30px_rgba(0,0,0,0.18)] border border-white/80 min-w-[200px] pointer-events-none select-none animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between mb-1.5 gap-2">
-                    <span 
-                      className="text-[9px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider shadow-xs"
-                      style={{ backgroundColor: colorHex }}
-                    >
-                      {label}
-                    </span>
-                    <span className="text-[10px] font-bold text-gray-400">
-                      {pub.especie === ESPECIE.GATO ? 'Gato' : 'Perro'}
-                    </span>
-                  </div>
-
-                  <h4 className="text-sm font-extrabold text-[#2D3748] m-0 leading-tight">
-                    {pub.nombre || pub.nombreMascota || 'Mascota reportada'}
-                  </h4>
-                  <p className="text-[11px] text-gray-500 m-0 mt-0.5 font-medium leading-snug">
-                    {pub.raza || 'Raza no especificada'}
-                    {pub.barrio ? ` • ${pub.barrio}` : ''}
-                  </p>
-
-                  <div className="mt-2 text-[10px] font-bold text-gray-400 flex items-center justify-between border-t border-gray-100 pt-1.5">
-                    <span>Click para abrir detalle</span>
-                    <span style={{ color: colorHex }}>→</span>
-                  </div>
-                </div>
-              </Tooltip>
-            </Marker>
-          );
-        })}
+        <CapaMarcadores
+          publicaciones={publicaciones}
+          onSelectPublicacion={onSelectPublicacion}
+        />
       </MapContainer>
     </div>
   );
