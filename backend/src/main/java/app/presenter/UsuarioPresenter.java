@@ -2,6 +2,7 @@ package app.presenter;
 
 import app.Response;
 import app.business.UsuarioService;
+import app.model.dto.LoginRequest;
 import app.model.dto.UsuarioRequest;
 import app.model.dto.UsuarioResponse;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,8 @@ public class UsuarioPresenter {
     }
 
     /**
-     * T - 1.1.7: Endpoint para registrar un usuario capturando errores de validación.
+     * T - 1.1.7: Endpoint para registrar un usuario
+     * Ruta: POST /api/usuarios/registro
      */
     @PostMapping("/registro")
     public ResponseEntity<Response> registrarUsuario(@RequestBody UsuarioRequest request) {
@@ -34,7 +36,6 @@ public class UsuarioPresenter {
             );
 
         } catch (IllegalArgumentException e) {
-            // Retorna HTTP 400 Bad Request con el mensaje del dato faltante o inválido
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
@@ -45,6 +46,37 @@ public class UsuarioPresenter {
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al registrar el usuario",
+                    null
+            );
+        }
+    }
+
+    /**
+     * T - 1.2.2: Endpoint de autenticación (Login)
+     * Ruta: POST /api/usuarios/login
+     */
+    @PostMapping("/login")
+    public ResponseEntity<Response> login(@RequestBody LoginRequest request) {
+        try {
+            UsuarioResponse usuarioAutenticado = usuarioService.autenticar(request);
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Autenticación exitosa",
+                    usuarioAutenticado
+            );
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(
+                    HttpStatus.UNAUTHORIZED,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error durante la autenticación",
                     null
             );
         }

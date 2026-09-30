@@ -1,6 +1,7 @@
 package app.business;
 
 import app.model.Usuario;
+import app.model.dto.LoginRequest;
 import app.model.dto.UsuarioRequest;
 import app.model.dto.UsuarioResponse;
 import app.repository.UsuarioRepository;
@@ -27,10 +28,7 @@ public class UsuarioService {
     }
 
     /**
-     * Registro completo de usuario:
-     * - T - 1.1.5: Validación de correo único y normalización.
-     * - T - 1.1.6: Encriptación de contraseña con BCrypt y respuesta segura DTO.
-     * - T - 1.1.7: Manejo de datos faltantes o inválidos.
+     * T - 1.1.5, T - 1.1.6, T - 1.1.7: Registro completo de usuario
      */
     @Transactional
     public UsuarioResponse registrar(UsuarioRequest request) {
@@ -38,7 +36,6 @@ public class UsuarioService {
             throw new IllegalArgumentException("Los datos de usuario no pueden ser nulos");
         }
 
-        // T - 1.1.7: Validaciones de campos obligatorios
         if (request.getNombre() == null || request.getNombre().isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
@@ -51,10 +48,8 @@ public class UsuarioService {
             throw new IllegalArgumentException("El correo electrónico es obligatorio");
         }
 
-        // T - 1.1.5: Normalización y validación de correo único
         String emailNormalizado = request.getEmail().trim().toLowerCase();
 
-        // T - 1.1.7: Validación de formato de correo
         if (!EMAIL_PATTERN.matcher(emailNormalizado).matches()) {
             throw new IllegalArgumentException("El formato del correo electrónico es inválido");
         }
@@ -63,7 +58,6 @@ public class UsuarioService {
             throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado");
         }
 
-        // T - 1.1.7: Validaciones de contraseña
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
@@ -72,12 +66,10 @@ public class UsuarioService {
             throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres");
         }
 
-        // T - 1.1.6: Encriptación de contraseña con BCrypt
         String passwordEncriptada = (passwordEncoder != null)
                 ? passwordEncoder.encode(request.getPassword())
                 : request.getPassword();
 
-        // Guardado de la entidad
         Usuario usuario = new Usuario();
         usuario.setNombre(request.getNombre().trim());
         usuario.setApellido(request.getApellido().trim());
@@ -86,12 +78,45 @@ public class UsuarioService {
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
-        // T - 1.1.6: Retorno de DTO seguro sin la contraseña
         return new UsuarioResponse(
                 usuarioGuardado.getId(),
                 usuarioGuardado.getNombre(),
                 usuarioGuardado.getApellido(),
                 usuarioGuardado.getEmail()
+        );
+    }
+
+    /**
+     * T - 1.2.2: Autenticación de usuario (Login)
+     */
+    @Transactional(readOnly = true)
+    public UsuarioResponse autenticar(LoginRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Las credenciales no pueden ser nulas");
+        }
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El correo electrónico es obligatorio");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("La contraseña es obligatoria");
+        }
+
+        String emailNormalizado = request.getEmail().trim().toLowerCase();
+
+        Usuario usuario = usuarioRepository.findByEmail(emailNormalizado)
+                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
+
+        if (passwordEncoder != null && !passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+            throw new IllegalArgumentException("Credenciales inválidas");
+        }
+
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getApellido(),
+                usuario.getEmail()
         );
     }
 
