@@ -20,8 +20,7 @@ public class UsuarioPresenter {
     }
 
     /**
-     * T - 1.1.4: Endpoint para registrar un nuevo usuario en el sistema.
-     * Ruta: POST /api/usuarios/registro o POST /api/usuarios
+     * T - 1.1.7: Endpoint para registrar un usuario capturando errores de validación.
      */
     @PostMapping("/registro")
     public ResponseEntity<Response> registrarUsuario(@RequestBody UsuarioRequest request) {
@@ -35,6 +34,7 @@ public class UsuarioPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+            // Retorna HTTP 400 Bad Request con el mensaje del dato faltante o inválido
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
