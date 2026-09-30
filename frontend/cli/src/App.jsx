@@ -4,8 +4,19 @@ import DetallePublicacion from "./components/publicaciones/DetallePublicacion";
 import BusquedaPublicaciones from "./components/publicaciones/BusquedaPublicaciones";
 import DockNavegacion from "./components/layout/DockNavegacion";
 import MapaPrincipal from "./components/mapa/MapaPrincipal";
+import AuthSlider from "./components/auth/AuthSlider";
 
 export default function App() {
+  const [usuarioLogueado, setUsuarioLogueado] = useState(() => {
+    const guardado = localStorage.getItem('user');
+    return guardado ? JSON.parse(guardado) : null;
+  });
+
+  // Abre automáticamente al entrar si no hay sesión iniciada, pero se puede cerrar
+  const [isAuthOpen, setIsAuthOpen] = useState(() => {
+    return !localStorage.getItem('user');
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [refrescoKey, setRefrescoKey] = useState(0);
@@ -16,6 +27,14 @@ export default function App() {
   const handleSuccess = () => {
     setSuccessMessage("¡Publicación creada exitosamente!");
     setRefrescoKey((prev) => prev + 1);
+    setTimeout(() => setSuccessMessage(null), 4000);
+  };
+
+  const handleAuthExitoso = (usuario, mensaje) => {
+    setUsuarioLogueado(usuario);
+    setSuccessMessage(mensaje || `¡Bienvenido/a, ${usuario.nombre}!`);
+    setIsAuthOpen(false);
+    setActiveTab('inicio');
     setTimeout(() => setSuccessMessage(null), 4000);
   };
 
@@ -40,6 +59,7 @@ export default function App() {
         onSelectTab={(tab) => {
           setActiveTab(tab);
           if (tab === 'inicio') setDetalleId(null);
+          if (tab === 'perfil') setIsAuthOpen(true);
         }}
         onPublicarClick={() => setIsModalOpen(true)}
       />
@@ -92,6 +112,16 @@ export default function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSuccess}
+      />
+
+      {/* 7. SLIDER DE AUTENTICACIÓN (LOGIN 1.2.1 + REGISTRO) */}
+      <AuthSlider
+        isOpen={isAuthOpen}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setActiveTab('inicio');
+        }}
+        onSuccess={handleAuthExitoso}
       />
     </div>
   );
