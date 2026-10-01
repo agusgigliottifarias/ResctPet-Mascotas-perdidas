@@ -2,14 +2,11 @@ package app.presenter;
 
 import app.Response;
 import app.business.UsuarioService;
+import app.model.dto.LoginRequest;
 import app.model.dto.UsuarioRequest;
 import app.model.dto.UsuarioResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,15 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class UsuarioPresenter {
 
     private final UsuarioService usuarioService;
-    private final AuthenticationManager authenticationManager;
 
-    public UsuarioPresenter(UsuarioService usuarioService, AuthenticationManager authenticationManager) {
+    public UsuarioPresenter(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
-        this.authenticationManager = authenticationManager;
     }
 
     /**
-     * T - 1.1.4: Endpoint para registrar un nuevo usuario en el sistema.
+     * T - 1.1.7 / T - 1.1.4: Endpoint para registrar un usuario
      * Ruta: POST /api/usuarios/registro
      */
     @PostMapping("/registro")
@@ -57,28 +52,31 @@ public class UsuarioPresenter {
     }
 
     /**
-     * T - 1.2.3: Endpoint para validar las credenciales del usuario.
+     * T - 1.2.3 / T - 1.2.2: Endpoint de autenticación (Login)
      * Ruta: POST /api/usuarios/login
      */
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody UsuarioRequest request) {
+    public ResponseEntity login(@RequestBody LoginRequest request) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UsuarioResponse usuarioAutenticado = usuarioService.autenticar(request);
 
             return Response.response(
                     HttpStatus.OK,
-                    "Credenciales válidas. Acceso concedido.",
+                    "Autenticación exitosa",
+                    usuarioAutenticado
+            );
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(
+                    HttpStatus.UNAUTHORIZED,
+                    e.getMessage(),
                     null
             );
 
         } catch (Exception e) {
             return Response.response(
-                    HttpStatus.UNAUTHORIZED,
-                    "Correo electrónico o contraseña incorrectos",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error durante la autenticación",
                     null
             );
         }
