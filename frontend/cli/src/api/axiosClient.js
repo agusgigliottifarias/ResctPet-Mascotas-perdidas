@@ -7,9 +7,20 @@ const axiosClient = axios.create({
   },
 });
 
-// Interceptor para peticiones (ej. adjuntar tokens si se requiere más adelante)
+// Interceptor para peticiones: inyecta automáticamente el token JWT si hay sesión activa
 axiosClient.interceptors.request.use(
   (config) => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        if (user.token) {
+          config.headers.Authorization = `Bearer ${user.token}`;
+        }
+      }
+    } catch (e) {
+      console.error('Error al leer el token de sesión:', e);
+    }
     return config;
   },
   (error) => {
@@ -21,7 +32,6 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Manejo global de errores (ej. 401, 500)
     return Promise.reject(error);
   }
 );

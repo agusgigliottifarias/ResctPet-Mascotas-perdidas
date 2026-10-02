@@ -7,7 +7,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
-  // Estados de Login (Tarjeta 1.2.1)
+  // Estados de Login (Tarea 1.2.7)
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState(null);
@@ -23,35 +23,47 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
 
   if (!isOpen) return null;
 
-  // Manejador del Login (Criterios de la HU 1.2.1)
+  // Tarea 1.2.7: Integración de inicio de sesión con Spring Boot
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoginError(null);
 
+    // 1. Validación de campos obligatorios en el cliente
     if (!loginEmail.trim() || !loginPassword) {
-      setLoginError("Ingresá tu correo electrónico y contraseña.");
+      setLoginError("Por favor, ingresá tu correo electrónico y contraseña.");
       return;
     }
 
     try {
       setLoginLoading(true);
+
+      // 2. Llamada real al endpoint POST /api/usuarios/login
       const usuario = await loginUsuario({
         email: loginEmail,
         password: loginPassword
       });
 
+      // 3. Persistencia de sesión con JWT
       localStorage.setItem("user", JSON.stringify(usuario));
+
+      // 4. Notificar a App.jsx y cerrar el slider
       if (onSuccess) onSuccess(usuario, `¡Hola de nuevo, ${usuario.nombre}!`);
       if (onClose) onClose();
+
     } catch (err) {
-      // Informa si las credenciales son incorrectas o no está registrado
-      setLoginError(err.message || "Credenciales incorrectas o usuario no registrado.");
+      // 5. Captura de errores: el backend responde HTTP 401 con "Credenciales inválidas"
+      const mensajeBackend =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Credenciales inválidas. Verificá tu correo y contraseña.";
+
+      setLoginError(mensajeBackend);
     } finally {
       setLoginLoading(false);
     }
   };
 
-  // Manejador del Registro (Conexión al backend Spring Boot)
+  // Integración de Registro
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setRegError(null);
@@ -89,7 +101,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Fondo con desenfoque */}
+        {/* Fondo con desenfoque que permite cerrar al hacer clic afuera */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -105,7 +117,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           className="relative z-10 flex h-[540px] w-[860px] overflow-hidden rounded-[36px] bg-white/85 backdrop-blur-2xl shadow-[0_30px_70px_-15px_rgba(45,55,72,0.22)] border border-white/90 ring-1 ring-black/5"
         >
-          {/* Botón de cierre (✕) */}
+          {/* Botón de cierre (✕) para explorar como invitado */}
           <button
             onClick={onClose}
             className="absolute top-5 right-5 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-[#718096] border border-white/80 hover:bg-white hover:text-[#2D3748] transition-all cursor-pointer shadow-sm"
@@ -113,7 +125,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
             ✕
           </button>
 
-          {/* ================= PANEL DESLIZANTE (NARANJA YIRANDO) ================= */}
+          {/* ================= PANEL DESLIZANTE ================= */}
           <motion.div
             className="absolute top-0 left-0 z-30 flex h-full w-1/2 flex-col items-center justify-center bg-[#FF7A59] p-10 text-center text-white shadow-2xl"
             animate={{ x: isRegister ? "0%" : "100%" }}
@@ -143,12 +155,16 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
           {/* ================= FORMULARIO 1: INICIAR SESIÓN (IZQUIERDA) ================= */}
           <div className="absolute left-0 top-0 flex h-full w-1/2 flex-col items-center justify-center p-9">
             <h3 className="font-heading text-2xl font-bold mb-0.5 text-[#2D3748]">Iniciar Sesión</h3>
-            <p className="text-xs font-semibold text-[#718096] mb-4">Ingresá tus datos para continuar</p>
+            <p className="text-xs font-semibold text-[#718096] mb-4">Ingresá tus credenciales para acceder</p>
 
             {loginError && (
-              <div className="mb-3 w-full rounded-xl bg-red-500/10 p-2 text-[11px] font-bold text-red-600 border border-red-500/20 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-3 w-full rounded-xl bg-red-500/10 p-2 text-[11px] font-bold text-red-600 border border-red-500/20 text-center"
+              >
                 {loginError}
-              </div>
+              </motion.div>
             )}
 
             <form onSubmit={handleLoginSubmit} className="w-full space-y-3">
@@ -157,6 +173,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 placeholder="Correo electrónico"
+                disabled={loginLoading}
                 className="w-full rounded-xl bg-white/70 border border-white/80 px-4 py-2.5 text-xs text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all focus:bg-white focus:border-[#FF7A59]"
               />
 
@@ -166,6 +183,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="Contraseña"
+                  disabled={loginLoading}
                   className="w-full rounded-xl bg-white/70 border border-white/80 pl-4 pr-11 py-2.5 text-xs text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all focus:bg-white focus:border-[#FF7A59]"
                 />
                 <button
@@ -180,9 +198,16 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
               <button
                 type="submit"
                 disabled={loginLoading}
-                className="font-heading w-full rounded-xl bg-[#FF7A59] py-3 font-bold text-white text-xs shadow-md transition-all hover:bg-[#ff6842] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="font-heading w-full rounded-xl bg-[#FF7A59] py-3 font-bold text-white text-xs shadow-md transition-all hover:bg-[#ff6842] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loginLoading ? "Verificando..." : "Entrar a Yirando"}
+                {loginLoading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Autenticando...</span>
+                  </>
+                ) : (
+                  "Entrar a Yirando"
+                )}
               </button>
 
               <button
@@ -201,9 +226,13 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
             <p className="text-xs font-semibold text-[#718096] mb-4">Sé parte de la comunidad de rescate</p>
 
             {regError && (
-              <div className="mb-3 w-full rounded-xl bg-red-500/10 p-2 text-[11px] font-bold text-red-600 border border-red-500/20 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-3 w-full rounded-xl bg-red-500/10 p-2 text-[11px] font-bold text-red-600 border border-red-500/20 text-center"
+              >
                 {regError}
-              </div>
+              </motion.div>
             )}
 
             <form onSubmit={handleRegisterSubmit} className="w-full space-y-2.5">
@@ -213,6 +242,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
                   value={regNombre}
                   onChange={(e) => setRegNombre(e.target.value)}
                   placeholder="Nombre"
+                  disabled={regLoading}
                   className="w-full rounded-xl bg-white/70 border border-white/80 px-3 py-2 text-xs text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all focus:bg-white focus:border-[#FF7A59]"
                 />
                 <input
@@ -220,6 +250,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
                   value={regApellido}
                   onChange={(e) => setRegApellido(e.target.value)}
                   placeholder="Apellido"
+                  disabled={regLoading}
                   className="w-full rounded-xl bg-white/70 border border-white/80 px-3 py-2 text-xs text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all focus:bg-white focus:border-[#FF7A59]"
                 />
               </div>
@@ -229,6 +260,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
                 placeholder="Correo electrónico"
+                disabled={regLoading}
                 className="w-full rounded-xl bg-white/70 border border-white/80 px-3 py-2 text-xs text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all focus:bg-white focus:border-[#FF7A59]"
               />
 
@@ -238,6 +270,7 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
                   placeholder="Contraseña (mín. 6 caracteres)"
+                  disabled={regLoading}
                   className="w-full rounded-xl bg-white/70 border border-white/80 pl-3 pr-11 py-2 text-xs text-[#2D3748] font-medium placeholder-[#A0AEC0] outline-none transition-all focus:bg-white focus:border-[#FF7A59]"
                 />
                 <button
@@ -252,9 +285,16 @@ export default function AuthSlider({ isOpen, onClose, onSuccess }) {
               <button
                 type="submit"
                 disabled={regLoading}
-                className="font-heading w-full rounded-xl bg-[#FF7A59] py-2.5 font-bold text-white text-xs shadow-md transition-all hover:bg-[#ff6842] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="font-heading w-full rounded-xl bg-[#FF7A59] py-2.5 font-bold text-white text-xs shadow-md transition-all hover:bg-[#ff6842] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {regLoading ? "Registrando..." : "Registrarme Gratis"}
+                {regLoading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Registrando...</span>
+                  </>
+                ) : (
+                  "Registrarme Gratis"
+                )}
               </button>
 
               <button
