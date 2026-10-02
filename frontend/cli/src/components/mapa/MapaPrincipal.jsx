@@ -177,7 +177,7 @@ export default function MapaPrincipal({
     }
   }, []);
 
-  useEffect(() => {
+    useEffect(() => {
     const cargarMarcadores = async () => {
       let listaApi = [];
       try {
@@ -190,17 +190,19 @@ export default function MapaPrincipal({
       const locales = JSON.parse(localStorage.getItem('resctpet_publicaciones') || '[]');
       const combinadas = [...locales, ...listaApi.filter(p => !locales.some(l => String(l.id) === String(p.id)))];
 
-      const conCoordenadas = combinadas.map((p, idx) => {
-        let lat = Number(p.latitud);
-        let lng = Number(p.longitud);
+      // Lectura unificada de coordenadas reales (sin inventar ubicaciones)
+      const conCoordenadas = combinadas
+        .map((p) => {
+          const latReal = p.latitud ?? p.coordenadas?.lat ?? p.lat;
+          const lngReal = p.longitud ?? p.coordenadas?.lng ?? p.lng;
 
-        if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) {
-          lat = PUERTO_MADRYN[0] + (idx * 0.003 - 0.006);
-          lng = PUERTO_MADRYN[1] + (idx * 0.003 - 0.006);
-        }
-
-        return { ...p, latitud: lat, longitud: lng };
-      });
+          return {
+            ...p,
+            latitud: Number(latReal),
+            longitud: Number(lngReal)
+          };
+        })
+        .filter(p => !isNaN(p.latitud) && !isNaN(p.longitud) && p.latitud !== 0);
 
       setPublicaciones(conCoordenadas);
     };

@@ -12,9 +12,9 @@ const calcularDistanciaKm = (lat1, lon1, lat2, lon2) => {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 };
 
@@ -68,8 +68,8 @@ export default function BusquedaPublicaciones({
     ...(especie === ESPECIE.PERRO
       ? RAZAS_PERRO
       : especie === ESPECIE.GATO
-      ? RAZAS_GATO
-      : [])
+        ? RAZAS_GATO
+        : [])
   ];
 
   const hayCriterioActivo = Boolean(
@@ -90,7 +90,7 @@ export default function BusquedaPublicaciones({
       {/* ========================================================================= */}
       {isOpen && (
         <aside className="fixed left-28 top-6 z-30 w-[380px] bg-white/95 backdrop-blur-2xl rounded-[32px] border border-white/90 shadow-[0_20px_50px_-10px_rgba(45,55,72,0.18)] p-4 space-y-3 transition-all duration-300 ease-out animate-in fade-in slide-in-from-left-4">
-          
+
           {/* Cabecera */}
           <div className="flex items-center justify-between pb-1 border-b border-gray-100">
             <h2 className="text-sm font-black text-[#2D3748]">
@@ -110,7 +110,7 @@ export default function BusquedaPublicaciones({
 
           {/* FILA PRINCIPAL: [ Píldora ] [ Botón 5 km ] [ Botón Filtros ] */}
           <div className="flex items-center gap-2">
-            
+
             {/* Píldora de búsqueda con botón de lupa */}
             <div className="relative flex-1">
               <input
@@ -140,11 +140,10 @@ export default function BusquedaPublicaciones({
               onClick={toggleCercania}
               disabled={cargandoUbicacion}
               title={cercaniaActiva ? "Radio de 5 km activado" : "Activar radio de 5 km"}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer border-2 flex-shrink-0 active:scale-95 ${
-                cercaniaActiva
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer border-2 flex-shrink-0 active:scale-95 ${cercaniaActiva
                   ? 'bg-[#2EC4B6] text-white border-[#2EC4B6] shadow-[0_4px_16px_rgba(46,196,182,0.45)] scale-105'
                   : 'bg-teal-50/90 text-[#2EC4B6] border-[#2EC4B6]/40 hover:bg-teal-100 hover:border-[#2EC4B6]'
-              }`}
+                }`}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -158,11 +157,10 @@ export default function BusquedaPublicaciones({
                 type="button"
                 onClick={() => setMenuFiltroAbierto((prev) => !prev)}
                 title="Filtros"
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer border-2 flex-shrink-0 active:scale-95 ${
-                  hayFiltrosAvanzados || menuFiltroAbierto
+                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer border-2 flex-shrink-0 active:scale-95 ${hayFiltrosAvanzados || menuFiltroAbierto
                     ? 'bg-[#FF7A59] text-white border-[#FF7A59] shadow-[0_4px_16px_rgba(255,122,89,0.45)] scale-105'
                     : 'bg-orange-50/90 text-[#FF7A59] border-[#FF7A59]/40 hover:bg-orange-100 hover:border-[#FF7A59]'
-                }`}
+                  }`}
               >
                 <svg className="w-4 h-4" viewBox="0 0 320 320" fill="none">
                   <path d="M60 98H260" stroke="currentColor" strokeWidth="26" strokeLinecap="round" />
@@ -211,33 +209,30 @@ export default function BusquedaPublicaciones({
                         <button
                           type="button"
                           onClick={() => { setEspecie(''); setRaza(''); }}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            especie === ''
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${especie === ''
                               ? 'bg-white text-[#FF7A59] shadow-sm scale-[1.02] border border-black/5'
                               : 'text-[#718096] hover:text-[#2D3748]'
-                          }`}
+                            }`}
                         >
                           Todas
                         </button>
                         <button
                           type="button"
                           onClick={() => { setEspecie(ESPECIE.PERRO); setRaza(''); }}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            especie === ESPECIE.PERRO
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${especie === ESPECIE.PERRO
                               ? 'bg-white text-[#FF7A59] shadow-sm scale-[1.02] border border-black/5'
                               : 'text-[#718096] hover:text-[#2D3748]'
-                          }`}
+                            }`}
                         >
                           Perros
                         </button>
                         <button
                           type="button"
                           onClick={() => { setEspecie(ESPECIE.GATO); setRaza(''); }}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            especie === ESPECIE.GATO
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${especie === ESPECIE.GATO
                               ? 'bg-white text-[#FF7A59] shadow-sm scale-[1.02] border border-black/5'
                               : 'text-[#718096] hover:text-[#2D3748]'
-                          }`}
+                            }`}
                         >
                           Gatos
                         </button>
@@ -260,7 +255,7 @@ export default function BusquedaPublicaciones({
                           </button>
                         )}
                       </div>
-                      
+
                       <CustomSelect
                         value={raza}
                         onChange={(val) => setRaza(val)}
@@ -281,33 +276,30 @@ export default function BusquedaPublicaciones({
                         <button
                           type="button"
                           onClick={() => setTipo('')}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            tipo === ''
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${tipo === ''
                               ? 'bg-white text-[#2D3748] shadow-sm scale-[1.02] border border-black/5'
                               : 'text-[#718096] hover:text-[#2D3748]'
-                          }`}
+                            }`}
                         >
                           Todos
                         </button>
                         <button
                           type="button"
                           onClick={() => setTipo(tipo === TIPO_PUBLICACION.PERDIDA ? '' : TIPO_PUBLICACION.PERDIDA)}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            tipo === TIPO_PUBLICACION.PERDIDA
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${tipo === TIPO_PUBLICACION.PERDIDA
                               ? 'bg-[#FF7A59] text-white shadow-sm scale-[1.02]'
                               : 'text-[#718096] hover:text-[#FF7A59]'
-                          }`}
+                            }`}
                         >
                           Perdidos
                         </button>
                         <button
                           type="button"
                           onClick={() => setTipo(tipo === TIPO_PUBLICACION.ENCONTRADA ? '' : TIPO_PUBLICACION.ENCONTRADA)}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            tipo === TIPO_PUBLICACION.ENCONTRADA
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${tipo === TIPO_PUBLICACION.ENCONTRADA
                               ? 'bg-[#2EC4B6] text-white shadow-sm scale-[1.02]'
                               : 'text-[#718096] hover:text-[#2EC4B6]'
-                          }`}
+                            }`}
                         >
                           Encontrados
                         </button>
@@ -374,7 +366,7 @@ export default function BusquedaPublicaciones({
       {/* ========================================================================= */}
       {debeMostrarPanel && (
         <section className="fixed right-6 top-6 bottom-6 w-[440px] z-30 bg-white/95 backdrop-blur-2xl rounded-[36px] border border-white/80 shadow-[0_20px_50px_-10px_rgba(45,55,72,0.18)] p-5 flex flex-col justify-between transition-all duration-300 ease-out animate-in fade-in slide-in-from-right-8">
-          
+
           {/* Cabecera */}
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <div>
@@ -382,8 +374,8 @@ export default function BusquedaPublicaciones({
                 {mostrarEnInicio
                   ? 'Mascotas Recientes'
                   : cercaniaActiva
-                  ? 'Mascotas en el Radar (5 km)'
-                  : 'Resultados de Búsqueda'}
+                    ? 'Mascotas en el Radar (5 km)'
+                    : 'Resultados de Búsqueda'}
               </h3>
               <p className="text-[11px] text-gray-400 font-semibold">
                 {totalResultados} {totalResultados === 1 ? 'publicación' : 'publicaciones'}
@@ -424,8 +416,11 @@ export default function BusquedaPublicaciones({
             ) : (
               <div className="flex flex-col gap-2.5">
                 {publicaciones.map((pub) => {
-                  const dist = cercaniaActiva && coordsUsuario && pub.coordenadas
-                    ? calcularDistanciaKm(coordsUsuario.latitud, coordsUsuario.longitud, pub.coordenadas.lat, pub.coordenadas.lng)
+                  const latPub = pub.latitud ?? pub.coordenadas?.lat ?? pub.lat;
+                  const lngPub = pub.longitud ?? pub.coordenadas?.lng ?? pub.lng;
+
+                  const dist = cercaniaActiva && coordsUsuario && latPub != null && lngPub != null
+                    ? calcularDistanciaKm(coordsUsuario.latitud, coordsUsuario.longitud, Number(latPub), Number(lngPub))
                     : null;
 
                   const tipoFinal = pub.tipoPublicacion || pub.tipo;
@@ -459,11 +454,10 @@ export default function BusquedaPublicaciones({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
                           <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider ${
-                              esPerdida
+                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider ${esPerdida
                                 ? 'bg-[#FF7A59]/15 text-[#FF7A59]'
                                 : 'bg-[#2EC4B6]/15 text-[#2EC4B6]'
-                            }`}
+                              }`}
                           >
                             {esPerdida ? 'PERDIDO' : 'ENCONTRADO'}
                           </span>

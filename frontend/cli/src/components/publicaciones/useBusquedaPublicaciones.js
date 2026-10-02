@@ -1,6 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { buscarPublicaciones } from '../../api/publicacionesApi';
 
+// Función para calcular distancia exacta en km entre dos puntos (Haversine)
+const calcularDistanciaKm = (lat1, lon1, lat2, lon2) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
   // Filtros de texto, especie, tipo y raza
   const [termino, setTermino] = useState('');
@@ -64,7 +78,9 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
 
       // Publicaciones guardadas localmente
       const locales = JSON.parse(
-        localStorage.getItem('resctpet_publicaciones') || '[]'
+        localStorage.getItem('yirando_publicaciones') ||
+        localStorage.getItem('resctpet_publicaciones') ||
+        '[]'
       );
 
       // -----------------------------
@@ -141,13 +157,38 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
         });
       }
 
-      // Combinar publicaciones locales + backend
-      const combinadas = [
+      // Combinar publicaciones locales + backend (evitando duplicados por id)
+      let combinadas = [
         ...filtradasLocales,
         ...listaApi.filter(
-          p => !locales.some(l => l.id === p.id)
+          p => !locales.some(l => String(l.id) === String(p.id))
         )
       ];
+
+      // -----------------------------
+      // ORDENAMIENTO Y FILTRO POR CERCANÍA
+      // -----------------------------
+      if (cercaniaActiva && coordsUsuario) {
+        combinadas = combinadas
+          .map(p => {
+            const lat = Number(p.latitud ?? p.coordenadas?.lat ?? p.lat);
+            const lng = Number(p.longitud ?? p.coordenadas?.lng ?? p.lng);
+            const dist = calcularDistanciaKm(
+              coordsUsuario.latitud,
+              coordsUsuario.longitud,
+              lat,
+              lng
+            );
+            return {
+              ...p,
+              latitud: lat,
+              longitud: lng,
+              distanciaKm: dist
+            };
+          })
+          .filter(p => p.distanciaKm <= radioKm)
+          .sort((a, b) => a.distanciaKm - b.distanciaKm); // Las más cercanas arriba de todo
+      }
 
       setPublicaciones(combinadas);
       setPaginaActual(1);
@@ -219,8 +260,8 @@ export const useBusquedaPublicaciones = ({ refrescoKey = 0 } = {}) => {
   // BÚSQUEDA AUTOMÁTICA DE FILTROS
   // -----------------------------
   useEffect(() => {
-  ejecutarBusqueda();
-}, [termino, tipo, especie, raza, cercaniaActiva, coordsUsuario, refrescoKey]);
+    ejecutarBusqueda();
+  }, [termino, tipo, especie, raza, cercaniaActiva, coordsUsuario, refrescoKey]);
 
   // -----------------------------
   // PAGINACIÓN
