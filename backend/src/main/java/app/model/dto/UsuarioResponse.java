@@ -6,6 +6,7 @@ public class UsuarioResponse {
     private String nombre;
     private String apellido;
     private String email;
+    private String token; // Campo agregado para T - 1.2.4
 
     public UsuarioResponse() {
     }
@@ -15,6 +16,14 @@ public class UsuarioResponse {
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
+    }
+
+    public UsuarioResponse(Long id, String nombre, String apellido, String email, String token) {
+        this.id = id;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.email = email;
+        this.token = token;
     }
 
     public Long getId() {
@@ -47,5 +56,13 @@ public class UsuarioResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

@@ -5,6 +5,7 @@ import app.model.dto.LoginRequest;
 import app.model.dto.UsuarioRequest;
 import app.model.dto.UsuarioResponse;
 import app.repository.UsuarioRepository;
+import app.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,15 +17,18 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     // Patrón Regex para validar formato de correo electrónico
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     );
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    // Inyección por constructor de repositorios, encriptador y generador JWT
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -87,7 +91,7 @@ public class UsuarioService {
     }
 
     /**
-     * T - 1.2.2: Autenticación de usuario (Login)
+     * T - 1.2.2 y T - 1.2.4: Autenticación de usuario (Login) y generación de token JWT
      */
     @Transactional(readOnly = true)
     public UsuarioResponse autenticar(LoginRequest request) {
@@ -112,11 +116,17 @@ public class UsuarioService {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
 
+        // T - 1.2.4: Generación del token JWT firmado
+        String token = (jwtUtil != null)
+                ? jwtUtil.generarToken(usuario.getId(), usuario.getEmail())
+                : null;
+
         return new UsuarioResponse(
                 usuario.getId(),
                 usuario.getNombre(),
                 usuario.getApellido(),
-                usuario.getEmail()
+                usuario.getEmail(),
+                token
         );
     }
 
