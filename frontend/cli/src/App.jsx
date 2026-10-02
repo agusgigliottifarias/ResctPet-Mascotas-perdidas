@@ -5,17 +5,26 @@ import BusquedaPublicaciones from "./components/publicaciones/BusquedaPublicacio
 import DockNavegacion from "./components/layout/DockNavegacion";
 import MapaPrincipal from "./components/mapa/MapaPrincipal";
 import AuthSlider from "./components/auth/AuthSlider";
+import PerfilUsuario from "./components/perfil/PerfilUsuario";
 
 export default function App() {
+  // Estado del usuario activo
   const [usuarioLogueado, setUsuarioLogueado] = useState(() => {
-    const guardado = localStorage.getItem('user');
-    return guardado ? JSON.parse(guardado) : null;
+    try {
+      const guardado = localStorage.getItem('user');
+      return guardado ? JSON.parse(guardado) : null;
+    } catch {
+      return null;
+    }
   });
 
-  // Abre automáticamente al entrar si no hay sesión iniciada, pero se puede cerrar
+  // Si no hay sesión, se abre el slider al entrar (pero se puede cerrar para explorar como invitado)
   const [isAuthOpen, setIsAuthOpen] = useState(() => {
     return !localStorage.getItem('user');
   });
+
+  // Estado para la vista de información del usuario (Tarea 1.3.1)
+  const [isPerfilOpen, setIsPerfilOpen] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -36,6 +45,15 @@ export default function App() {
     setIsAuthOpen(false);
     setActiveTab('inicio');
     setTimeout(() => setSuccessMessage(null), 4000);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUsuarioLogueado(null);
+    setIsPerfilOpen(false);
+    setActiveTab('inicio');
+    setSuccessMessage("Sesión cerrada correctamente.");
+    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   return (
@@ -59,7 +77,13 @@ export default function App() {
         onSelectTab={(tab) => {
           setActiveTab(tab);
           if (tab === 'inicio') setDetalleId(null);
-          if (tab === 'perfil') setIsAuthOpen(true);
+          if (tab === 'perfil') {
+            if (!usuarioLogueado) {
+              setIsAuthOpen(true);
+            } else {
+              setIsPerfilOpen(true);
+            }
+          }
         }}
         onPublicarClick={() => setIsModalOpen(true)}
       />
@@ -114,7 +138,7 @@ export default function App() {
         onSuccess={handleSuccess}
       />
 
-      {/* 7. SLIDER DE AUTENTICACIÓN (LOGIN 1.2.1 + REGISTRO) */}
+      {/* 7. SLIDER DE AUTENTICACIÓN (LOGIN + REGISTRO) */}
       <AuthSlider
         isOpen={isAuthOpen}
         onClose={() => {
@@ -122,6 +146,17 @@ export default function App() {
           setActiveTab('inicio');
         }}
         onSuccess={handleAuthExitoso}
+      />
+
+      {/* 8. VISTA DE INFORMACIÓN DEL USUARIO (TAREA 1.3.1) */}
+      <PerfilUsuario
+        isOpen={isPerfilOpen}
+        onClose={() => {
+          setIsPerfilOpen(false);
+          setActiveTab('inicio');
+        }}
+        usuario={usuarioLogueado}
+        onLogout={handleLogout}
       />
     </div>
   );
