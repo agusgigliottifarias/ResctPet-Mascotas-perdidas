@@ -7,6 +7,7 @@ import app.model.dto.UsuarioRequest;
 import app.model.dto.UsuarioResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,13 +22,19 @@ public class UsuarioPresenter {
     }
 
     /**
-     * T - 1.1.7 / T - 1.1.4: Endpoint para registrar un usuario
-     * Ruta: POST /api/usuarios/registro
+     * T - 1.1.7 / T - 1.1.4:
+     * Endpoint para registrar un usuario.
+     *
+     * Ruta:
+     * POST /api/usuarios/registro
      */
     @PostMapping("/registro")
-    public ResponseEntity registrarUsuario(@RequestBody UsuarioRequest request) {
+    public ResponseEntity registrarUsuario(
+            @RequestBody UsuarioRequest request) {
+
         try {
-            UsuarioResponse nuevoUsuario = usuarioService.registrar(request);
+            UsuarioResponse nuevoUsuario =
+                    usuarioService.registrar(request);
 
             return Response.response(
                     HttpStatus.CREATED,
@@ -36,6 +43,7 @@ public class UsuarioPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage(),
@@ -43,6 +51,7 @@ public class UsuarioPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error al registrar el usuario",
@@ -52,13 +61,19 @@ public class UsuarioPresenter {
     }
 
     /**
-     * T - 1.2.3 / T - 1.2.2: Endpoint de autenticación (Login)
-     * Ruta: POST /api/usuarios/login
+     * T - 1.2.3 / T - 1.2.2:
+     * Endpoint de autenticación (Login).
+     *
+     * Ruta:
+     * POST /api/usuarios/login
      */
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody LoginRequest request) {
+    public ResponseEntity login(
+            @RequestBody LoginRequest request) {
+
         try {
-            UsuarioResponse usuarioAutenticado = usuarioService.autenticar(request);
+            UsuarioResponse usuarioAutenticado =
+                    usuarioService.autenticar(request);
 
             return Response.response(
                     HttpStatus.OK,
@@ -67,6 +82,7 @@ public class UsuarioPresenter {
             );
 
         } catch (IllegalArgumentException e) {
+
             return Response.response(
                     HttpStatus.UNAUTHORIZED,
                     e.getMessage(),
@@ -74,9 +90,53 @@ public class UsuarioPresenter {
             );
 
         } catch (Exception e) {
+
             return Response.response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Ocurrió un error durante la autenticación",
+                    null
+            );
+        }
+    }
+
+    /**
+     * T - 1.3.2:
+     * Endpoint para consultar la información
+     * del usuario autenticado.
+     *
+     * Ruta:
+     * GET /api/usuarios/perfil
+     */
+    @GetMapping("/perfil")
+    public ResponseEntity obtenerInformacionUsuario(
+            Authentication authentication) {
+
+        try {
+
+            UsuarioResponse usuario =
+                    usuarioService.obtenerInformacionUsuario(
+                            authentication.getName()
+                    );
+
+            return Response.response(
+                    HttpStatus.OK,
+                    "Información del usuario obtenida correctamente",
+                    usuario
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return Response.response(
+                    HttpStatus.NOT_FOUND,
+                    e.getMessage(),
+                    null
+            );
+
+        } catch (Exception e) {
+
+            return Response.response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error al consultar la información del usuario",
                     null
             );
         }

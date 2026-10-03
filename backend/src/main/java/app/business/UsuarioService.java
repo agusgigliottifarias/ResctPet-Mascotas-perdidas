@@ -8,9 +8,6 @@ import app.repository.UsuarioRepository;
 import app.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.regex.Pattern;
 
 @Service
 public class UsuarioService {
@@ -19,66 +16,59 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    // Patrón Regex para validar formato de correo electrónico
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
-    );
-
-    // Inyección por constructor de repositorios, encriptador y generador JWT
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UsuarioService(
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
 
-    /**
-     * T - 1.1.5, T - 1.1.6, T - 1.1.7: Registro completo de usuario
-     */
-    @Transactional
     public UsuarioResponse registrar(UsuarioRequest request) {
+
         if (request == null) {
-            throw new IllegalArgumentException("Los datos de usuario no pueden ser nulos");
+            throw new IllegalArgumentException("Los datos del usuario no pueden ser nulos");
         }
 
-        if (request.getNombre() == null || request.getNombre().isBlank()) {
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
 
-        if (request.getApellido() == null || request.getApellido().isBlank()) {
+        if (request.getApellido() == null || request.getApellido().trim().isEmpty()) {
             throw new IllegalArgumentException("El apellido es obligatorio");
         }
 
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("El correo electrónico es obligatorio");
         }
 
-        String emailNormalizado = request.getEmail().trim().toLowerCase();
-
-        if (!EMAIL_PATTERN.matcher(emailNormalizado).matches()) {
-            throw new IllegalArgumentException("El formato del correo electrónico es inválido");
-        }
-
-        if (usuarioRepository.existsByEmail(emailNormalizado)) {
-            throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado");
-        }
-
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
-        if (request.getPassword().length() < 6) {
-            throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres");
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException(
+                    "El correo electrónico ya se encuentra registrado"
+            );
         }
 
-        String passwordEncriptada = (passwordEncoder != null)
-                ? passwordEncoder.encode(request.getPassword())
-                : request.getPassword();
+        if (request.getPassword().length() < 6) {
+            throw new IllegalArgumentException(
+                    "La contraseña debe tener al menos 6 caracteres"
+            );
+        }
 
         Usuario usuario = new Usuario();
+
         usuario.setNombre(request.getNombre().trim());
         usuario.setApellido(request.getApellido().trim());
-        usuario.setEmail(emailNormalizado);
-        usuario.setPassword(passwordEncriptada);
+        usuario.setEmail(email);
+        usuario.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
@@ -90,36 +80,48 @@ public class UsuarioService {
         );
     }
 
-    /**
-     * T - 1.2.2 y T - 1.2.4: Autenticación de usuario (Login) y generación de token JWT
-     */
-    @Transactional(readOnly = true)
     public UsuarioResponse autenticar(LoginRequest request) {
+
         if (request == null) {
-            throw new IllegalArgumentException("Las credenciales no pueden ser nulas");
+            throw new IllegalArgumentException(
+                    "Las credenciales no pueden ser nulas"
+            );
         }
 
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new IllegalArgumentException("El correo electrónico es obligatorio");
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "El correo electrónico es obligatorio"
+            );
         }
 
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new IllegalArgumentException("La contraseña es obligatoria");
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "La contraseña es obligatoria"
+            );
         }
 
-        String emailNormalizado = request.getEmail().trim().toLowerCase();
+        String email = request.getEmail().trim().toLowerCase();
 
-        Usuario usuario = usuarioRepository.findByEmail(emailNormalizado)
-                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Credenciales inválidas"
+                        )
+                );
 
-        if (passwordEncoder != null && !passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-            throw new IllegalArgumentException("Credenciales inválidas");
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                usuario.getPassword())) {
+
+            throw new IllegalArgumentException(
+                    "Credenciales inválidas"
+            );
         }
 
-        // T - 1.2.4: Generación del token JWT firmado
-        String token = (jwtUtil != null)
-                ? jwtUtil.generarToken(usuario.getId(), usuario.getEmail())
-                : null;
+        String token = jwtUtil.generarToken(
+                usuario.getId(),
+                usuario.getEmail()
+        );
 
         return new UsuarioResponse(
                 usuario.getId(),
@@ -130,11 +132,31 @@ public class UsuarioService {
         );
     }
 
-    @Transactional(readOnly = true)
-    public boolean existeEmail(String email) {
-        if (email == null || email.isBlank()) {
-            return false;
+    /**
+     * T - 1.3.2:
+     * Obtiene la información del usuario autenticado.
+     */
+    public UsuarioResponse obtenerInformacionUsuario(String email) {
+
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "El correo electrónico es obligatorio"
+            );
         }
-        return usuarioRepository.existsByEmail(email.trim().toLowerCase());
+
+        Usuario usuario = usuarioRepository.findByEmail(
+                email.trim().toLowerCase()
+        ).orElseThrow(() ->
+                new IllegalArgumentException(
+                        "Usuario no encontrado"
+                )
+        );
+
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getApellido(),
+                usuario.getEmail()
+        );
     }
 }
