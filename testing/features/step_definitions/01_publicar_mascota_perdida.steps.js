@@ -28,15 +28,30 @@ function primeraFila(tabla) {
 }
 
 async function enviarPost(ruta, body) {
+  const credenciales = Buffer
+    .from('test@resctpet.com:123456')
+    .toString('base64');
+
   const response = await fetch(URL_BASE + ruta, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${credenciales}`
     },
     body: JSON.stringify(body)
   });
 
-  const jsonBody = await response.json();
+  const textoRespuesta = await response.text();
+
+  let jsonBody = null;
+
+  try {
+    jsonBody = JSON.parse(textoRespuesta);
+  } catch (e) {
+    jsonBody = {
+      raw: textoRespuesta
+    };
+  }
 
   return {
     httpStatus: response.status,
@@ -52,7 +67,6 @@ When(
   'se crea la publicación de mascota perdida:',
   { timeout: 10000 },
   async function (tabla) {
-
     const datosPublicacion = primeraFila(tabla);
 
     this.response = await enviarPost(
@@ -62,24 +76,32 @@ When(
   }
 );
 
-Then('la respuesta HTTP debe ser status {int}', function (statusCodeEsperado) {
-  assert.strictEqual(
-    this.response.httpStatus,
-    statusCodeEsperado
-  );
+Then(
+  'la respuesta HTTP debe ser status {int}',
+  function (statusCodeEsperado) {
 
-  assert.strictEqual(
-    this.response.body.status,
-    statusCodeEsperado
-  );
-});
+    assert.strictEqual(
+      this.response.httpStatus,
+      statusCodeEsperado
+    );
 
-Then('el mensaje de la respuesta debe ser {string}', function (mensajeEsperado) {
-  assert.strictEqual(
-    this.response.body.message,
-    mensajeEsperado
-  );
-});
+    assert.strictEqual(
+      this.response.body.status,
+      statusCodeEsperado
+    );
+  }
+);
+
+Then(
+  'el mensaje de la respuesta debe ser {string}',
+  function (mensajeEsperado) {
+
+    assert.strictEqual(
+      this.response.body.message,
+      mensajeEsperado
+    );
+  }
+);
 
 Then(
   'la respuesta contiene la publicación registrada:',
@@ -108,14 +130,20 @@ Then(
       esperado.especie
     );
 
-    if (esperado.raza !== undefined && esperado.raza !== null) {
+    if (
+      esperado.raza !== undefined &&
+      esperado.raza !== null
+    ) {
       assert.strictEqual(
         publicacion.raza,
         esperado.raza
       );
     }
 
-    if (esperado.edad !== undefined && esperado.edad !== null) {
+    if (
+      esperado.edad !== undefined &&
+      esperado.edad !== null
+    ) {
       assert.strictEqual(
         Number(publicacion.edad),
         esperado.edad
